@@ -1,0 +1,13 @@
+node_modules
+dist
+.env
+.env.*.local
+*.local
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# Logs
+npm-debug.log*

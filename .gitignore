@@ -1,0 +1,42 @@
+# Environment files
+.env
+.env.*
+!/frontend/.env.example
+!/backend/.env.example
+
+# Dependencies and generated output
+node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Caches
+.cache/
+.vite/
+.parcel-cache/
+.turbo/
+.eslintcache
+
+# Logs and temporary files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.tmp
+*.temp
+*.bak
+*.orig
+*.rej
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.history/
+.vscode/*.log
+*.swp
+*.swo
+*~
