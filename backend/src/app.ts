@@ -1,12 +1,19 @@
 import express, { Application } from 'express'
 import helmet from 'helmet'
 import cors from 'cors'
+import cookieParser from 'cookie-parser'
 import { env } from './config/env'
 import healthRouter from './routes/health.routes'
+import { createAuthRouter } from './routes/auth.routes'
+import { mongooseUserRepository, type UserRepository } from './models/User'
 import { notFound } from './middleware/notFound'
 import { errorHandler, HttpError } from './middleware/errorHandler'
 
-export function createApp(): Application {
+export interface AppOptions {
+  userRepository?: UserRepository
+}
+
+export function createApp(options: AppOptions = {}): Application {
   const app = express()
 
   app.use(helmet())
@@ -32,7 +39,9 @@ export function createApp(): Application {
   )
 
   app.use(express.json())
+  app.use(cookieParser())
 
+  app.use('/api/auth', createAuthRouter(options.userRepository ?? mongooseUserRepository))
   app.use('/api', healthRouter)
 
   app.use(notFound)

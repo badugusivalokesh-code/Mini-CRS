@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express'
 
 export interface HttpError extends Error {
   status?: number
+  type?: string
 }
 
 /**
@@ -19,14 +20,18 @@ export function errorHandler(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _next: NextFunction,
 ): void {
-  const status = err.status ?? 500
+  const isMalformedJson = err.type === 'entity.parse.failed'
+  const status = isMalformedJson ? 400 : err.status ?? 500
 
   if (status >= 500) {
-    // eslint-disable-next-line no-console
     console.error(err)
   }
 
   res.status(status).json({
-    message: status >= 500 ? 'Internal server error' : err.message,
+    message: status >= 500
+      ? 'Internal server error'
+      : isMalformedJson
+        ? 'Invalid JSON request body.'
+        : err.message,
   })
 }
