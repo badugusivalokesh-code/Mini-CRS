@@ -24,10 +24,8 @@ export class ApiError extends Error {
  * Thin fetch wrapper for talking to the Mini CRM backend.
  *
  * - Sends and parses JSON automatically.
- * - Always sends credentials so the httpOnly auth cookie (introduced in a
- *   later phase) is included once it exists; harmless before then.
- * - Auth-aware behaviour (e.g. redirecting to /login on 401) is added once
- *   authentication is implemented — not part of this foundation.
+ * - Always sends credentials so browser requests include the httpOnly auth cookie.
+ * - Converts non-2xx responses into ApiError for auth forms and route guards.
  */
 export async function apiRequest<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
   const { body, headers, ...rest } = options
