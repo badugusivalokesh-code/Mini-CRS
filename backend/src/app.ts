@@ -6,11 +6,15 @@ import { env } from './config/env'
 import healthRouter from './routes/health.routes'
 import { createAuthRouter } from './routes/auth.routes'
 import { mongooseUserRepository, type UserRepository } from './models/User'
+import { createCustomersRouter } from './routes/customers.routes'
+import { mongooseCustomerRepository, type CustomerRepository } from './models/Customer'
+import { authenticate } from './middleware/authenticate'
 import { notFound } from './middleware/notFound'
 import { errorHandler, HttpError } from './middleware/errorHandler'
 
 export interface AppOptions {
   userRepository?: UserRepository
+  customerRepository?: CustomerRepository
 }
 
 export function createApp(options: AppOptions = {}): Application {
@@ -42,6 +46,11 @@ export function createApp(options: AppOptions = {}): Application {
   app.use(cookieParser())
 
   app.use('/api/auth', createAuthRouter(options.userRepository ?? mongooseUserRepository))
+  app.use(
+    '/api/customers',
+    authenticate,
+    createCustomersRouter(options.customerRepository ?? mongooseCustomerRepository),
+  )
   app.use('/api', healthRouter)
 
   app.use(notFound)
