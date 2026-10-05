@@ -1,3 +1,13 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+	.crm-input {
+		@apply mt-2 h-11 w-full rounded-md border border-[#dfe9f1] bg-[#f3f8fc] px-3 text-sm font-normal text-[#123553] outline-none transition;
+	}
+
+	.crm-input:focus {
+		@apply border-[#514bff] ring-2 ring-[#514bff]/15;
+	}
+}
