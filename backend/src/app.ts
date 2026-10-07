@@ -8,6 +8,8 @@ import { createAuthRouter } from './routes/auth.routes'
 import { mongooseUserRepository, type UserRepository } from './models/User'
 import { createCustomersRouter } from './routes/customers.routes'
 import { mongooseCustomerRepository, type CustomerRepository } from './models/Customer'
+import { createDealsRouter } from './routes/deals.routes'
+import { mongooseDealRepository, type DealRepository } from './models/Deal'
 import { authenticate } from './middleware/authenticate'
 import { notFound } from './middleware/notFound'
 import { errorHandler, HttpError } from './middleware/errorHandler'
@@ -15,6 +17,7 @@ import { errorHandler, HttpError } from './middleware/errorHandler'
 export interface AppOptions {
   userRepository?: UserRepository
   customerRepository?: CustomerRepository
+  dealRepository?: DealRepository
 }
 
 export function createApp(options: AppOptions = {}): Application {
@@ -50,6 +53,14 @@ export function createApp(options: AppOptions = {}): Application {
     '/api/customers',
     authenticate,
     createCustomersRouter(options.customerRepository ?? mongooseCustomerRepository),
+  )
+  app.use(
+    '/api/deals',
+    authenticate,
+    createDealsRouter(
+      options.customerRepository ?? mongooseCustomerRepository,
+      options.dealRepository ?? mongooseDealRepository,
+    ),
   )
   app.use('/api', healthRouter)
 

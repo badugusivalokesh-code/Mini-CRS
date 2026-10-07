@@ -1,4 +1,4 @@
-import { LayoutDashboard, UsersRound } from 'lucide-react'
+import { BriefcaseBusiness, LayoutDashboard, UsersRound } from 'lucide-react'
 import { NavLink, Link } from 'react-router-dom'
 import type { PropsWithChildren } from 'react'
 
@@ -21,6 +21,9 @@ export default function CustomerShell({ children }: PropsWithChildren) {
           <NavLink to="/customers" aria-label="Customers" title="Customers" className={navClass}>
             <UsersRound size={20} strokeWidth={1.8} />
           </NavLink>
+          <NavLink to="/deals" aria-label="Deals" title="Deals" className={navClass}>
+            <BriefcaseBusiness size={20} strokeWidth={1.8} />
+          </NavLink>
         </nav>
       </aside>
 
@@ -32,6 +35,9 @@ export default function CustomerShell({ children }: PropsWithChildren) {
           </NavLink>
           <NavLink to="/customers" className={({ isActive }) => `flex h-9 items-center gap-2 rounded-full px-3 text-xs font-semibold ${isActive ? 'bg-[#efeeff] text-[#514bff]' : 'text-[#71869a]'}`}>
             <UsersRound size={16} /> Customers
+          </NavLink>
+          <NavLink to="/deals" className={({ isActive }) => `flex h-9 items-center gap-2 rounded-full px-3 text-xs font-semibold ${isActive ? 'bg-[#efeeff] text-[#514bff]' : 'text-[#71869a]'}`}>
+            <BriefcaseBusiness size={16} /> Deals
           </NavLink>
         </div>
       </nav>

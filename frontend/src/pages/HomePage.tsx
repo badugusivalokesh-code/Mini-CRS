@@ -42,11 +42,14 @@ export default function HomePage() {
         <h1 className="mt-3 text-3xl font-bold">You’re signed in</h1>
         <p className="mt-3 text-[#71869a]">Authenticated as {user?.email}</p>
         <p className="mt-10 max-w-xl text-sm leading-6 text-[#71869a]">
-          Your Mini CRM account is ready. View and manage your customers here.
+          Your Mini CRM account is ready. View and manage your customers and deals here.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Link to="/customers" className="inline-flex h-10 items-center rounded-md bg-[#514bff] px-4 text-sm font-semibold text-white hover:bg-[#403be8]">
             Customers
+          </Link>
+          <Link to="/deals" className="inline-flex h-10 items-center rounded-md border border-[#dfe9f1] bg-white px-4 text-sm font-semibold text-[#514bff] hover:border-[#514bff]">
+            Deals
           </Link>
         </div>
         {error && <p role="alert" className="mt-5 text-sm text-[#d65363]">{error}</p>}

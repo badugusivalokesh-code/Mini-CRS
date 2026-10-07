@@ -6,6 +6,7 @@ interface EnvConfig {
   nodeEnv: string
   port: number
   mongoUri: string
+  mongoDnsServers: string[]
   jwtSecret: string
   clientUrl: string
 }
@@ -27,6 +28,10 @@ export const env: EnvConfig = {
   nodeEnv: process.env.NODE_ENV ?? 'development',
   port: Number(process.env.PORT ?? 4000),
   mongoUri: required('MONGO_URI'),
+  mongoDnsServers: (process.env.MONGO_DNS_SERVERS ?? '')
+    .split(',')
+    .map((server) => server.trim())
+    .filter(Boolean),
   jwtSecret: required('JWT_SECRET'),
   clientUrl: required('CLIENT_URL'),
 }
