@@ -2,7 +2,6 @@ const API_URL = import.meta.env.VITE_API_URL
 
 if (!API_URL) {
   // Fail loudly during development rather than silently calling the wrong host.
-  // eslint-disable-next-line no-console
   console.error('VITE_API_URL is not set. Check your frontend .env file.')
 }
 
