@@ -19,9 +19,18 @@ export interface DealRecord {
   updatedAt: Date
 }
 
+export interface CustomerRelatedDeal {
+  id: string
+  title: string
+  value: number
+  stage: DealStage
+  expectedCloseDate: Date
+}
+
 export interface DealRepository {
   create(ownerId: string, data: DealData): Promise<DealRecord>
   list(ownerId: string, stage?: DealStage): Promise<DealRecord[]>
+  listForCustomer?(ownerId: string, customerId: string): Promise<CustomerRelatedDeal[]>
   findForUser(id: string, ownerId: string): Promise<DealRecord | null>
   updateForUser(id: string, ownerId: string, data: DealUpdate): Promise<DealRecord | null>
   deleteForUser(id: string, ownerId: string): Promise<boolean>
@@ -121,6 +130,25 @@ export const mongooseDealRepository: DealRepository = {
       .sort({ expectedCloseDate: 1, _id: 1 })
       .exec()
     return deals.map((deal) => toRecord(deal as unknown as PopulatedDeal))
+  },
+
+  async listForCustomer(ownerId, customerId) {
+    if (!Types.ObjectId.isValid(customerId)) return []
+    const deals = await Deal.find({
+      user: new Types.ObjectId(ownerId),
+      customer: new Types.ObjectId(customerId),
+    })
+      .sort({ expectedCloseDate: 1, _id: 1 })
+      .select('_id title value stage expectedCloseDate')
+      .lean()
+      .exec()
+    return deals.map((deal) => ({
+      id: deal._id.toString(),
+      title: deal.title,
+      value: deal.value,
+      stage: deal.stage,
+      expectedCloseDate: deal.expectedCloseDate,
+    }))
   },
 
   async findForUser(id, ownerId) {

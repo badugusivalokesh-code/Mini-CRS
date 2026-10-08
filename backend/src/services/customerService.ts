@@ -1,8 +1,14 @@
 import type { CustomerRepository } from '../models/Customer'
+import type { DealRepository, CustomerRelatedDeal } from '../models/Deal'
+import type { TaskRepository, CustomerRelatedTask } from '../models/Task'
 import type { CustomerData, CustomerListQuery, CustomerUpdate } from '../validation/customerSchemas'
 
 export class CustomerService {
-  constructor(private readonly customers: CustomerRepository) {}
+  constructor(
+    private readonly customers: CustomerRepository,
+    private readonly deals?: DealRepository,
+    private readonly tasks?: TaskRepository,
+  ) {}
 
   create(ownerId: string, data: CustomerData) {
     return this.customers.create(ownerId, data)
@@ -21,8 +27,27 @@ export class CustomerService {
     }
   }
 
-  find(ownerId: string, id: string) {
-    return this.customers.findForUser(id, ownerId)
+  async find(ownerId: string, id: string) {
+    const customer = await this.customers.findForUser(id, ownerId)
+    if (!customer) return null
+
+    let relatedDeals: CustomerRelatedDeal[] = []
+    if (this.deals?.listForCustomer) {
+      relatedDeals = await this.deals.listForCustomer(ownerId, id)
+    }
+
+    let relatedTasks: CustomerRelatedTask[] = []
+    if (this.tasks?.listForCustomer) {
+      relatedTasks = await this.tasks.listForCustomer(ownerId, id)
+    }
+
+    return {
+      customer,
+      related: {
+        deals: relatedDeals,
+        tasks: relatedTasks,
+      },
+    }
   }
 
   update(ownerId: string, id: string, data: CustomerUpdate) {

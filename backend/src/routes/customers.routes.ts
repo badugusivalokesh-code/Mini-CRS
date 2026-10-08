@@ -1,12 +1,18 @@
 import { Router } from 'express'
 import { CustomerService } from '../services/customerService'
 import { mongooseCustomerRepository, type CustomerRepository } from '../models/Customer'
+import { mongooseDealRepository, type DealRepository } from '../models/Deal'
+import { mongooseTaskRepository, type TaskRepository } from '../models/Task'
 import { asyncRoute } from '../utils/asyncRoute'
 import { createCustomerSchema, listCustomersSchema, updateCustomerSchema } from '../validation/customerSchemas'
 
-export function createCustomersRouter(customers: CustomerRepository = mongooseCustomerRepository): Router {
+export function createCustomersRouter(
+  customers: CustomerRepository = mongooseCustomerRepository,
+  deals: DealRepository = mongooseDealRepository,
+  tasks: TaskRepository = mongooseTaskRepository,
+): Router {
   const router = Router()
-  const service = new CustomerService(customers)
+  const service = new CustomerService(customers, deals, tasks)
 
   router.post('/', asyncRoute(async (request, response) => {
     const parsed = createCustomerSchema.safeParse(request.body)
@@ -45,12 +51,12 @@ export function createCustomersRouter(customers: CustomerRepository = mongooseCu
       response.status(401).json({ message: 'Authentication required.' })
       return
     }
-    const customer = await service.find(ownerId, request.params.id)
-    if (!customer) {
+    const result = await service.find(ownerId, request.params.id)
+    if (!result) {
       response.status(404).json({ message: 'Customer not found.' })
       return
     }
-    response.status(200).json({ customer, related: { deals: [], tasks: [] } })
+    response.status(200).json(result)
   }))
 
   router.patch('/:id', asyncRoute(async (request, response) => {
