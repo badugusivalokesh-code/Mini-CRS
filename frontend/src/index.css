@@ -10,4 +10,8 @@
 	.crm-input:focus {
 		@apply border-[#514bff] ring-2 ring-[#514bff]/15;
 	}
+
+	.crm-panel {
+		@apply rounded-xl border border-[#e1eaf2] bg-white shadow-[0_2px_10px_rgba(18,53,83,0.04)];
+	}
 }

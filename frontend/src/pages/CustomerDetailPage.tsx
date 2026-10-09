@@ -5,6 +5,33 @@ import DeleteCustomerDialog from '@/components/customers/DeleteCustomerDialog'
 import CustomerShell from '@/components/customers/CustomerShell'
 import { customersApi, type CustomerDetailResponse } from '@/lib/customersApi'
 
+const currency = new Intl.NumberFormat(undefined, {
+  style: 'currency',
+  currency: 'USD',
+  maximumFractionDigits: 0,
+})
+
+function formatCalendarDate(value: string): string {
+  const [year, month, day] = value.slice(0, 10).split('-').map(Number)
+  const date = new Date(year, month - 1, day)
+  if (Number.isNaN(date.getTime())) return 'Date unavailable'
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+const STAGE_STYLES: Record<string, string> = {
+  Lead: 'bg-[#efeeff] text-[#514bff]',
+  Qualified: 'bg-[#e0f2fe] text-[#0369a1]',
+  Proposal: 'bg-[#fef3c7] text-[#b45309]',
+  Won: 'bg-[#eaf8f4] text-[#147b66]',
+  Lost: 'bg-[#edf2f6] text-[#4e6577]',
+}
+
+const PRIORITY_STYLES: Record<string, string> = {
+  High: 'bg-[#fff0f0] text-[#c74f60]',
+  Medium: 'bg-[#fff6e8] text-[#a76b14]',
+  Low: 'bg-[#edf4f8] text-[#60798d]',
+}
+
 export default function CustomerDetailPage() {
   const { id = '' } = useParams()
   const navigate = useNavigate()
@@ -38,7 +65,7 @@ export default function CustomerDetailPage() {
   return (
     <CustomerShell>
     <main className="min-h-screen bg-[#f3f8fc] text-[#123553]">
-      <header className="flex min-h-[76px] items-center justify-between border-b border-[#e5edf4] bg-white px-5 sm:px-10">
+      <header className="flex min-h-[76px] flex-wrap items-center justify-between gap-3 border-b border-[#e5edf4] bg-white px-4 py-3 sm:px-8 lg:px-10">
         <div>
           <Link to="/customers" className="text-xs font-medium text-[#8297a9] hover:text-[#514bff]">Customers</Link>
           <h1 className="mt-0.5 text-xl font-bold">Customer Details</h1>
@@ -63,7 +90,7 @@ export default function CustomerDetailPage() {
         )}
         {!loading && !error && details && (
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.8fr)]">
-            <section className="rounded-lg border border-[#e1eaf2] bg-white p-5 sm:p-8">
+            <section className="crm-panel p-5 sm:p-8">
               <div className="mb-7 flex flex-wrap items-start justify-between gap-4 border-b border-[#e8eef4] pb-6">
                 <div className="flex items-center gap-4">
                   <div aria-hidden="true" className="grid size-14 shrink-0 place-items-center rounded-full bg-[#eaf0f5] text-lg font-semibold text-[#71869a]">
@@ -87,13 +114,99 @@ export default function CustomerDetailPage() {
             </section>
 
             <aside className="space-y-5">
-              <section className="rounded-lg border border-[#e1eaf2] bg-white p-5 sm:p-6">
-                <h2 className="font-bold">Recent Deals</h2>
-                {details.related.deals.length === 0 && <p className="mt-4 text-sm text-[#8297a9]">No related deals yet.</p>}
+              <section className="crm-panel p-5 sm:p-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-bold">Recent Deals</h2>
+                  <Link to="/deals" className="text-xs font-semibold text-[#514bff] hover:underline">
+                    View all
+                  </Link>
+                </div>
+                {details.related.deals.length === 0 ? (
+                  <p className="mt-4 text-sm text-[#8297a9]">No related deals yet.</p>
+                ) : (
+                  <div className="mt-4 space-y-3">
+                    {details.related.deals.map((deal) => (
+                      <article
+                        key={deal.id}
+                        className="rounded-md border border-[#e8eef4] bg-[#fbfdff] p-3 text-sm transition hover:border-[#514bff]/40"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <h3 className="break-words font-semibold text-[#123553]">{deal.title}</h3>
+                          <span
+                            className={`shrink-0 rounded px-2 py-0.5 text-xs font-semibold ${
+                              STAGE_STYLES[deal.stage] ?? 'bg-[#efeeff] text-[#514bff]'
+                            }`}
+                          >
+                            {deal.stage}
+                          </span>
+                        </div>
+                        <div className="mt-2 flex items-center justify-between text-xs text-[#71869a]">
+                          <span className="font-bold text-[#123553]">
+                            {currency.format(deal.value)}
+                          </span>
+                          <span>Close: {formatCalendarDate(deal.expectedCloseDate)}</span>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
               </section>
-              <section className="rounded-lg border border-[#e1eaf2] bg-white p-5 sm:p-6">
-                <h2 className="font-bold">Tasks</h2>
-                {details.related.tasks.length === 0 && <p className="mt-4 text-sm text-[#8297a9]">No related tasks yet.</p>}
+
+              <section className="crm-panel p-5 sm:p-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-bold">Tasks</h2>
+                </div>
+                {details.related.tasks.length === 0 ? (
+                  <p className="mt-4 text-sm text-[#8297a9]">No related tasks yet.</p>
+                ) : (
+                  <div className="mt-4 space-y-3">
+                    {details.related.tasks.map((task) => (
+                      <article
+                        key={task.id}
+                        className={`rounded-md border p-3 text-sm transition ${
+                          task.overdue && !task.completed
+                            ? 'border-[#f2cbd0] bg-[#fff8f9]'
+                            : 'border-[#e8eef4] bg-[#fbfdff]'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <h3
+                            className={`break-words font-semibold ${
+                              task.completed ? 'text-[#8297a9] line-through' : 'text-[#123553]'
+                            }`}
+                          >
+                            {task.title}
+                          </h3>
+                          <span
+                            className={`shrink-0 rounded px-2 py-0.5 text-xs font-semibold ${
+                              PRIORITY_STYLES[task.priority] ?? 'bg-[#edf4f8] text-[#60798d]'
+                            }`}
+                          >
+                            {task.priority}
+                          </span>
+                        </div>
+                        <div className="mt-2 flex items-center justify-between text-xs">
+                          <span
+                            className={
+                              task.overdue && !task.completed
+                                ? 'font-semibold text-[#c74f60]'
+                                : 'text-[#71869a]'
+                            }
+                          >
+                            Due {formatCalendarDate(task.dueDate)}
+                          </span>
+                          {task.completed ? (
+                            <span className="font-semibold text-[#147b66]">Done</span>
+                          ) : task.overdue ? (
+                            <span className="font-semibold text-[#c74f60]">Overdue</span>
+                          ) : (
+                            <span className="text-[#8297a9]">Pending</span>
+                          )}
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
               </section>
             </aside>
           </div>

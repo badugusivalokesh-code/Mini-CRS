@@ -102,19 +102,19 @@ export default function CustomersPage() {
   return (
     <CustomerShell>
     <main className="min-h-screen bg-[#f3f8fc] text-[#123553]">
-      <header className="flex min-h-[76px] items-center justify-between border-b border-[#e5edf4] bg-white px-5 sm:px-10">
+      <header className="flex min-h-[76px] flex-wrap items-center justify-between gap-3 border-b border-[#e5edf4] bg-white px-4 py-3 sm:px-8 lg:px-10">
         <div>
           <Link to="/" className="text-xs font-medium text-[#8297a9] hover:text-[#514bff]">Mini CRM</Link>
           <h1 className="mt-0.5 text-xl font-bold">Customers</h1>
         </div>
         <button type="button" onClick={() => setFormDialog({ mode: 'create' })}
-          className="h-10 rounded-md bg-[#514bff] px-4 text-sm font-semibold text-white hover:bg-[#403be8] sm:px-5">
+          className="h-10 whitespace-nowrap rounded-lg bg-[#514bff] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#403be8] hover:shadow sm:px-5">
           Add Customer <span aria-hidden="true" className="ml-1">+</span>
         </button>
       </header>
 
       <section className="mx-auto max-w-[1440px] px-4 py-6 sm:px-8 sm:py-9">
-        {notice && <p role="status" className="mb-4 rounded-md bg-[#eaf8f4] px-4 py-3 text-sm text-[#147b66]">{notice}</p>}
+        {notice && <p role="status" className="crm-status mb-4 rounded-lg bg-[#eaf8f4] px-4 py-3 text-sm text-[#147b66]">{notice}</p>}
         <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <p className="text-sm font-semibold">Total: {pagination?.total ?? (loading ? '...' : 0)} customers</p>
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -122,7 +122,7 @@ export default function CustomersPage() {
               <label className="sr-only" htmlFor="customer-search">Search customers</label>
               <input id="customer-search" value={searchDraft} onChange={(event) => setSearchDraft(event.target.value)}
                 placeholder="Search name, company, email" maxLength={160}
-                className="h-10 min-w-0 flex-1 rounded-full border border-[#e1eaf2] bg-white px-4 text-sm outline-none focus:border-[#514bff]" />
+                className="crm-input mt-0 h-10 min-w-0 flex-1 rounded-lg px-3" />
               <button type="submit" className="h-10 rounded-full bg-white px-4 text-sm font-semibold text-[#514bff] hover:bg-[#f0efff]">Search</button>
             </form>
             <button type="button" aria-expanded={showFilters} onClick={() => setShowFilters((visible) => !visible)}
@@ -175,16 +175,16 @@ export default function CustomersPage() {
 
         {!error && !loading && customers.length > 0 && (
           <>
-            <div className="overflow-x-auto rounded-lg border border-[#e1eaf2] bg-white">
+            <div className="crm-panel overflow-x-auto">
               <table className="w-full min-w-[860px] border-collapse text-left text-sm">
-                <thead className="text-[#8297a9]">
+                <thead className="bg-[#f8fafc] text-[#71869a]">
                   <tr className="border-b border-[#e8eef4]">
-                    <th scope="col" className="px-5 py-4 font-medium">Name</th>
-                    <th scope="col" className="px-4 py-4 font-medium">Email</th>
-                    <th scope="col" className="px-4 py-4 font-medium">Phone</th>
-                    <th scope="col" className="px-4 py-4 font-medium">Company</th>
-                    <th scope="col" className="px-4 py-4 font-medium">Status</th>
-                    <th scope="col" className="px-4 py-4 text-right font-medium">Actions</th>
+                    <th scope="col" className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide">Name</th>
+                    <th scope="col" className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wide">Email</th>
+                    <th scope="col" className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wide">Phone</th>
+                    <th scope="col" className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wide">Company</th>
+                    <th scope="col" className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wide">Status</th>
+                    <th scope="col" className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wide">Actions</th>
                   </tr>
                 </thead>
                 <tbody>

@@ -25,9 +25,29 @@ export interface CustomerListResponse {
   }
 }
 
+export interface CustomerRelatedDeal {
+  id: string
+  title: string
+  value: number
+  stage: string
+  expectedCloseDate: string
+}
+
+export interface CustomerRelatedTask {
+  id: string
+  title: string
+  dueDate: string
+  priority: string
+  completed: boolean
+  overdue: boolean
+}
+
 export interface CustomerDetailResponse {
   customer: Customer
-  related: { deals: unknown[]; tasks: unknown[] }
+  related: {
+    deals: CustomerRelatedDeal[]
+    tasks: CustomerRelatedTask[]
+  }
 }
 
 export const customersApi = {
