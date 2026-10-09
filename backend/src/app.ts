@@ -10,6 +10,10 @@ import { createCustomersRouter } from './routes/customers.routes'
 import { mongooseCustomerRepository, type CustomerRepository } from './models/Customer'
 import { createDealsRouter } from './routes/deals.routes'
 import { mongooseDealRepository, type DealRepository } from './models/Deal'
+import { createTasksRouter } from './routes/tasks.routes'
+import { mongooseTaskRepository, type TaskRepository } from './models/Task'
+import { createDashboardRouter } from './routes/dashboard.routes'
+import { mongooseDashboardRepository, type DashboardRepository } from './models/Dashboard'
 import { authenticate } from './middleware/authenticate'
 import { notFound } from './middleware/notFound'
 import { errorHandler, HttpError } from './middleware/errorHandler'
@@ -18,6 +22,8 @@ export interface AppOptions {
   userRepository?: UserRepository
   customerRepository?: CustomerRepository
   dealRepository?: DealRepository
+  taskRepository?: TaskRepository
+  dashboardRepository?: DashboardRepository
 }
 
 export function createApp(options: AppOptions = {}): Application {
@@ -52,7 +58,11 @@ export function createApp(options: AppOptions = {}): Application {
   app.use(
     '/api/customers',
     authenticate,
-    createCustomersRouter(options.customerRepository ?? mongooseCustomerRepository),
+    createCustomersRouter(
+      options.customerRepository ?? mongooseCustomerRepository,
+      options.dealRepository ?? mongooseDealRepository,
+      options.taskRepository ?? mongooseTaskRepository,
+    ),
   )
   app.use(
     '/api/deals',
@@ -61,6 +71,20 @@ export function createApp(options: AppOptions = {}): Application {
       options.customerRepository ?? mongooseCustomerRepository,
       options.dealRepository ?? mongooseDealRepository,
     ),
+  )
+  app.use(
+    '/api/tasks',
+    authenticate,
+    createTasksRouter(
+      options.customerRepository ?? mongooseCustomerRepository,
+      options.dealRepository ?? mongooseDealRepository,
+      options.taskRepository ?? mongooseTaskRepository,
+    ),
+  )
+  app.use(
+    '/api/dashboard',
+    authenticate,
+    createDashboardRouter(options.dashboardRepository ?? mongooseDashboardRepository),
   )
   app.use('/api', healthRouter)
 

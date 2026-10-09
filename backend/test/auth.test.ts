@@ -81,6 +81,21 @@ test('invalid registration input returns 400', async () => {
   assert.equal(typeof response.body.message, 'string')
 })
 
+test('login and registration endpoints enforce their independent rate limits', async () => {
+  for (const [path, payload] of [
+    ['/api/auth/register', { email: 'invalid', password: 'short' }],
+    ['/api/auth/login', { email: 'invalid', password: 'short' }],
+  ] as const) {
+    const responses = []
+    for (let attempt = 0; attempt < 11; attempt += 1) {
+      responses.push(await request(app).post(path).send(payload))
+    }
+    assert.ok(responses.slice(0, 10).every((response) => response.status === 400))
+    assert.equal(responses[10].status, 429)
+    assert.match(responses[10].body.message, /too many attempts/i)
+  }
+})
+
 test('login returns a safe user and sets an httpOnly cookie, not a token response', async () => {
   await request(app).post('/api/auth/register')
     .send({ email: 'user@example.com', password: 'correct horse battery' })
