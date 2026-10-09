@@ -19,6 +19,57 @@ export class ApiError extends Error {
   }
 }
 
+export type FormFieldErrors = Record<string, string>
+
+export function validateFormFields(
+  form: HTMLFormElement,
+  labels: Record<string, string>,
+): FormFieldErrors {
+  const errors: FormFieldErrors = {}
+
+  for (const element of Array.from(form.elements)) {
+    if (
+      !(element instanceof HTMLInputElement)
+      && !(element instanceof HTMLSelectElement)
+      && !(element instanceof HTMLTextAreaElement)
+    ) continue
+
+    const { name, value, validity, required, type } = element
+    if (!name || element.disabled) continue
+
+    const label = labels[name] ?? name
+    if ((required && value.trim() === '') || validity.valueMissing) {
+      errors[name] = `${label} is required.`
+    } else if (validity.typeMismatch && type === 'email') {
+      errors[name] = 'Enter a valid email address.'
+    } else if (validity.badInput || validity.typeMismatch) {
+      errors[name] = `Enter a valid ${label.toLowerCase()}.`
+    } else if (validity.rangeUnderflow && element instanceof HTMLInputElement && element.min) {
+      errors[name] = `${label} must be at least ${element.min}.`
+    } else if (validity.rangeOverflow && element instanceof HTMLInputElement && element.max) {
+      errors[name] = `${label} must be no more than ${element.max}.`
+    } else if (validity.stepMismatch && type === 'number') {
+      errors[name] = `${label} can have no more than two decimal places.`
+    } else if (validity.tooLong && 'maxLength' in element && element.maxLength > 0) {
+      errors[name] = `${label} must be ${element.maxLength} characters or fewer.`
+    } else if (validity.tooShort && 'minLength' in element && element.minLength > 0) {
+      errors[name] = `${label} must be at least ${element.minLength} characters.`
+    } else if (!validity.valid) {
+      errors[name] = `Enter a valid ${label.toLowerCase()}.`
+    }
+  }
+
+  return errors
+}
+
+export function getFormErrorMessage(error: unknown, fallback: string): string {
+  if (!(error instanceof ApiError)) return fallback
+  if (error.status === 400) return error.message || 'Please check the entered information.'
+  if (error.status === 404) return 'This record could not be found. It may have been removed.'
+  if (error.status >= 500) return 'Something went wrong. Please try again.'
+  return error.message || fallback
+}
+
 /**
  * Thin fetch wrapper for talking to the Mini CRM backend.
  *

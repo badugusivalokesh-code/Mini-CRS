@@ -25,9 +25,9 @@ export default function DeleteCustomerDialog({ customerName, customerId, onClose
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#123553]/35 p-4" role="presentation">
+    <div className="crm-modal-backdrop fixed inset-0 z-50 flex items-start justify-center bg-[#123553]/35 p-3 sm:items-center sm:p-4" role="presentation">
       <section role="alertdialog" aria-modal="true" aria-labelledby="delete-customer-title"
-        className="w-full max-w-[420px] rounded-lg border border-[#e1eaf2] bg-white p-6 shadow-xl">
+        className="crm-dialog w-full max-w-[420px] rounded-xl border border-[#e1eaf2] bg-white p-5 shadow-xl sm:p-6">
         <h2 id="delete-customer-title" className="text-lg font-bold text-[#123553]">Delete customer?</h2>
         <p className="mt-3 text-sm leading-6 text-[#71869a]">
           This will permanently delete <span className="font-semibold text-[#24435f]">{customerName}</span>.

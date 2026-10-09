@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { ApiError } from '@/lib/apiClient'
+import { getFormErrorMessage, validateFormFields, type FormFieldErrors } from '@/lib/apiClient'
 import { customersApi, type Customer, type CustomerInput } from '@/lib/customersApi'
 
 interface CustomerFormDialogProps {
@@ -11,13 +11,30 @@ interface CustomerFormDialogProps {
 export default function CustomerFormDialog({ customer, onClose, onSaved }: CustomerFormDialogProps) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<FormFieldErrors>({})
   const isEditing = Boolean(customer)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setSubmitting(true)
+    const formElement = event.currentTarget
+    const validationErrors = validateFormFields(formElement, {
+      name: 'Name',
+      company: 'Company',
+      email: 'Email',
+      phone: 'Phone',
+      status: 'Status',
+      notes: 'Notes',
+    })
+    setFieldErrors(validationErrors)
     setError('')
-    const form = new FormData(event.currentTarget)
+    if (Object.keys(validationErrors).length > 0) {
+      const firstInvalid = formElement.elements.namedItem(Object.keys(validationErrors)[0])
+      if (firstInvalid instanceof HTMLElement) firstInvalid.focus()
+      return
+    }
+
+    setSubmitting(true)
+    const form = new FormData(formElement)
     const data: CustomerInput = {
       name: String(form.get('name') ?? '').trim(),
       company: String(form.get('company') ?? '').trim(),
@@ -33,19 +50,19 @@ export default function CustomerFormDialog({ customer, onClose, onSaved }: Custo
         : await customersApi.create(data)
       onSaved(response.customer)
     } catch (submitError) {
-      setError(submitError instanceof ApiError ? submitError.message : 'Unable to save this customer. Try again.')
+      setError(getFormErrorMessage(submitError, 'Unable to save this customer. Try again.'))
     } finally {
       setSubmitting(false)
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#123553]/35 p-4" role="presentation">
+    <div className="crm-modal-backdrop fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[#123553]/35 p-3 sm:items-center sm:p-4" role="presentation">
       <section
         role="dialog"
         aria-modal="true"
         aria-labelledby="customer-form-title"
-        className="my-auto max-h-[calc(100vh-2rem)] w-full max-w-[560px] overflow-y-auto rounded-lg border border-[#e1eaf2] bg-white p-5 shadow-xl sm:p-7"
+        className="crm-dialog my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-[560px] overflow-y-auto rounded-xl border border-[#e1eaf2] bg-white p-4 shadow-xl sm:max-h-[calc(100vh-2rem)] sm:p-7"
       >
         <header className="mb-6 flex items-start justify-between gap-4">
           <div>
@@ -54,41 +71,54 @@ export default function CustomerFormDialog({ customer, onClose, onSaved }: Custo
             </h2>
             <p className="mt-1 text-sm text-[#8297a9]">Customer information</p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-md px-2 py-1 text-sm text-[#71869a] hover:bg-[#f3f8fc]">
+          <button type="button" onClick={onClose} className="rounded-lg px-2 py-1 text-sm text-[#71869a] hover:bg-[#f3f8fc]">
             Close
           </button>
         </header>
 
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <form noValidate onSubmit={handleSubmit} onChange={() => { setFieldErrors({}); setError('') }} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <label className="text-sm font-semibold text-[#24435f]">
             Name
             <input name="name" required maxLength={120} defaultValue={customer?.name ?? ''} autoFocus
-              className="crm-input" />
+              aria-invalid={Boolean(fieldErrors.name)} aria-describedby={fieldErrors.name ? 'customer-name-error' : undefined}
+              className={`crm-input ${fieldErrors.name ? 'border-[#d65363]' : ''}`} />
+            {fieldErrors.name && <span id="customer-name-error" className="mt-1 block text-xs font-medium text-[#c0394b]">{fieldErrors.name}</span>}
           </label>
           <label className="text-sm font-semibold text-[#24435f]">
             Company
             <input name="company" required maxLength={160} defaultValue={customer?.company ?? ''}
-              className="crm-input" />
+              aria-invalid={Boolean(fieldErrors.company)} aria-describedby={fieldErrors.company ? 'customer-company-error' : undefined}
+              className={`crm-input ${fieldErrors.company ? 'border-[#d65363]' : ''}`} />
+            {fieldErrors.company && <span id="customer-company-error" className="mt-1 block text-xs font-medium text-[#c0394b]">{fieldErrors.company}</span>}
           </label>
           <label className="text-sm font-semibold text-[#24435f]">
             Email
             <input name="email" type="email" required maxLength={254} defaultValue={customer?.email ?? ''}
-              className="crm-input" />
+              aria-invalid={Boolean(fieldErrors.email)} aria-describedby={fieldErrors.email ? 'customer-email-error' : undefined}
+              className={`crm-input ${fieldErrors.email ? 'border-[#d65363]' : ''}`} />
+            {fieldErrors.email && <span id="customer-email-error" className="mt-1 block text-xs font-medium text-[#c0394b]">{fieldErrors.email}</span>}
           </label>
           <label className="text-sm font-semibold text-[#24435f]">
             Phone
             <input name="phone" type="tel" required maxLength={40} defaultValue={customer?.phone ?? ''}
-              className="crm-input" />
+              aria-invalid={Boolean(fieldErrors.phone)} aria-describedby={fieldErrors.phone ? 'customer-phone-error' : undefined}
+              className={`crm-input ${fieldErrors.phone ? 'border-[#d65363]' : ''}`} />
+            {fieldErrors.phone && <span id="customer-phone-error" className="mt-1 block text-xs font-medium text-[#c0394b]">{fieldErrors.phone}</span>}
           </label>
           <label className="text-sm font-semibold text-[#24435f]">
             Status
             <input name="status" required maxLength={40} placeholder="Enter a status"
-              defaultValue={customer?.status ?? ''} className="crm-input" />
+              defaultValue={customer?.status ?? ''} aria-invalid={Boolean(fieldErrors.status)}
+              aria-describedby={fieldErrors.status ? 'customer-status-error' : undefined}
+              className={`crm-input ${fieldErrors.status ? 'border-[#d65363]' : ''}`} />
+            {fieldErrors.status && <span id="customer-status-error" className="mt-1 block text-xs font-medium text-[#c0394b]">{fieldErrors.status}</span>}
           </label>
           <label className="text-sm font-semibold text-[#24435f] sm:col-span-2">
             Notes
             <textarea name="notes" maxLength={2000} rows={3} defaultValue={customer?.notes ?? ''}
-              className="crm-input h-auto min-h-[88px] py-3" />
+              aria-invalid={Boolean(fieldErrors.notes)} aria-describedby={fieldErrors.notes ? 'customer-notes-error' : undefined}
+              className={`crm-input h-auto min-h-[88px] py-3 ${fieldErrors.notes ? 'border-[#d65363]' : ''}`} />
+            {fieldErrors.notes && <span id="customer-notes-error" className="mt-1 block text-xs font-medium text-[#c0394b]">{fieldErrors.notes}</span>}
           </label>
 
           {error && <p role="alert" className="text-sm text-[#d65363] sm:col-span-2">{error}</p>}
