@@ -10,7 +10,8 @@ type DealDialogState = { mode: 'create' } | { mode: 'edit'; deal: Deal } | null
 const currency = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
 
 function formatCloseDate(value: string): string {
-  const date = new Date(value)
+  const [year, month, day] = value.slice(0, 10).split('-').map(Number)
+  const date = new Date(year, month - 1, day)
   if (Number.isNaN(date.getTime())) return 'Date unavailable'
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
 }
@@ -78,13 +79,13 @@ export default function DealsPage() {
   return (
     <CustomerShell>
       <main className="min-h-screen bg-[#f3f8fc] text-[#123553]">
-        <header className="flex min-h-[76px] items-center justify-between border-b border-[#e5edf4] bg-white px-5 sm:px-10">
+        <header className="flex min-h-[76px] flex-wrap items-center justify-between gap-3 border-b border-[#e5edf4] bg-white px-4 py-3 sm:px-8 lg:px-10">
           <div>
             <Link to="/" className="text-xs font-medium text-[#8297a9] hover:text-[#514bff]">Mini CRM</Link>
             <h1 className="mt-0.5 text-xl font-bold">Deals</h1>
           </div>
           <button type="button" onClick={() => setDialog({ mode: 'create' })}
-            className="h-10 rounded-md bg-[#514bff] px-4 text-sm font-semibold text-white hover:bg-[#403be8] sm:px-5">
+            className="h-10 whitespace-nowrap rounded-lg bg-[#514bff] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#403be8] hover:shadow sm:px-5">
             Add Deal <span aria-hidden="true" className="ml-1">+</span>
           </button>
         </header>
@@ -118,7 +119,7 @@ export default function DealsPage() {
                   const stageDeals = deals.filter((deal) => deal.stage === stage)
                   const stageValue = stageDeals.reduce((total, deal) => total + deal.value, 0)
                   return (
-                    <section key={stage} aria-label={`${stage} deals`} className="flex min-h-[400px] w-[276px] flex-col rounded-lg border border-[#e1eaf2] bg-[#eaf2f8] p-3">
+                    <section key={stage} aria-label={`${stage} deals`} className="flex min-h-[400px] w-[276px] flex-col rounded-xl border border-[#e1eaf2] bg-[#edf3f8] p-3">
                       <header className="mb-3 flex items-center justify-between gap-2 px-1 py-1">
                         <h2 className="text-sm font-bold text-[#24435f]">{stage}</h2>
                         <span className="rounded-full bg-white px-2 py-1 text-xs font-semibold text-[#71869a]">{stageDeals.length}</span>
@@ -126,7 +127,7 @@ export default function DealsPage() {
                       <p className="mb-3 px-1 text-xs text-[#8297a9]">{currency.format(stageValue)} total</p>
                       <div className="flex flex-1 flex-col gap-3">
                         {stageDeals.map((deal) => (
-                          <article key={deal.id} className="rounded-md border border-[#e1eaf2] bg-white p-4 shadow-[0_2px_8px_rgba(18,53,83,0.035)]">
+                          <article key={deal.id} className="crm-card rounded-lg border border-[#e1eaf2] bg-white p-4 shadow-[0_2px_8px_rgba(18,53,83,0.035)]">
                             <h3 className="break-words text-sm font-bold leading-5 text-[#123553]">{deal.title}</h3>
                             <p className="mt-3 text-lg font-semibold text-[#123553]">{currency.format(deal.value)}</p>
                             <div className="mt-3 border-t border-[#edf2f6] pt-3">

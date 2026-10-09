@@ -15,6 +15,10 @@
 		@apply rounded-xl border border-[#e1eaf2] bg-white shadow-[0_2px_10px_rgba(18,53,83,0.04)];
 	}
 
+	.crm-card {
+		@apply transition duration-150 ease-out hover:border-[#514bff]/30 hover:shadow-[0_5px_16px_rgba(18,53,83,0.07)];
+	}
+
 	.crm-modal-backdrop {
 		animation: crm-fade-in 140ms ease-out both;
 	}
