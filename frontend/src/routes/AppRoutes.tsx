@@ -7,6 +7,7 @@ import RegisterPage from '@/pages/RegisterPage'
 import CustomersPage from '@/pages/CustomersPage'
 import CustomerDetailPage from '@/pages/CustomerDetailPage'
 import DealsPage from '@/pages/DealsPage'
+import TasksPage from '@/pages/TasksPage'
 
 /**
  * Root route table with public authentication pages and a protected app entry.
@@ -21,6 +22,7 @@ export default function AppRoutes() {
         <Route path="/customers" element={<CustomersPage />} />
         <Route path="/customers/:id" element={<CustomerDetailPage />} />
         <Route path="/deals" element={<DealsPage />} />
+        <Route path="/tasks" element={<TasksPage />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
