@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { AlertCircle } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
 import CustomerShell from '@/components/customers/CustomerShell'
 import DashboardLoadingState from '@/components/dashboard/DashboardLoadingState'
 import DashboardMetrics from '@/components/dashboard/DashboardMetrics'
@@ -9,27 +8,11 @@ import { useAuth } from '@/useAuth'
 import { dashboardApi, type DashboardData } from '@/lib/dashboardApi'
 
 export default function HomePage() {
-  const { user, logout } = useAuth()
-  const navigate = useNavigate()
+  const { user } = useAuth()
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [logoutError, setLogoutError] = useState('')
-  const [signingOut, setSigningOut] = useState(false)
   const [loadAttempt, setLoadAttempt] = useState(0)
-
-  async function handleLogout() {
-    setSigningOut(true)
-    setLogoutError('')
-    try {
-      await logout()
-      navigate('/login', { replace: true })
-    } catch {
-      setLogoutError('Unable to sign out. Please try again.')
-    } finally {
-      setSigningOut(false)
-    }
-  }
 
   useEffect(() => {
     let active = true
@@ -67,18 +50,9 @@ export default function HomePage() {
           <div>
             <h1 className="mt-0.5 text-xl font-bold text-[#123553]">{greeting}, {displayName}</h1>
           </div>
-          <button
-            type="button"
-            onClick={handleLogout}
-            disabled={signingOut}
-            className="h-10 rounded-md border border-[#dfe9f1] bg-white px-4 text-sm font-semibold text-[#24435f] hover:border-[#514bff] hover:text-[#514bff] disabled:opacity-60"
-          >
-            {signingOut ? 'Signing out...' : 'Sign out'}
-          </button>
         </header>
 
         <div className="mx-auto max-w-[1200px] px-4 py-6 sm:px-8 sm:py-8">
-          {logoutError && <p role="alert" className="mb-4 text-sm text-[#d65363]">{logoutError}</p>}
           {error && (
             <section role="alert" className="mb-6 rounded-lg border border-[#f2cbd0] bg-white p-5 shadow-sm">
               <div className="flex items-start gap-3">
