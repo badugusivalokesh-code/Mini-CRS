@@ -5,10 +5,51 @@ import type { Credentials } from '@/lib/authApi'
 import AuthLayout from './AuthLayout'
 
 const DEMO_EMAIL = 'demo@clientra.app'
+const DEMO_PASSWORD = 'Clientra@123'
 
 interface LoginLocationState {
   from?: { pathname?: string }
   registered?: boolean
+}
+
+function DemoCredentials() {
+  const [copied, setCopied] = useState(false)
+
+  function handleCopy() {
+    const text = `Email: ${DEMO_EMAIL}\nPassword: ${DEMO_PASSWORD}`
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }).catch(() => {/* clipboard unavailable — credentials are visible on screen */})
+  }
+
+  return (
+    <section
+      aria-labelledby="demo-account-title"
+      className="mb-6 rounded-lg border border-[#e0eaf4] bg-[#f7fbff] p-4"
+    >
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h2 id="demo-account-title" className="text-sm font-bold text-[#123553]">Demo Credentials</h2>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="inline-flex items-center rounded px-2.5 py-1 text-xs font-semibold text-[#514bff] border border-[#d5d3ff] bg-white hover:bg-[#f0f0ff] transition"
+        >
+          {copied ? '✓ Copied' : 'Copy Credentials'}
+        </button>
+      </div>
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-2">
+          <span className="w-16 shrink-0 text-xs text-[#8297a9]">Email</span>
+          <span className="font-mono text-sm font-semibold text-[#123553] break-all">{DEMO_EMAIL}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-16 shrink-0 text-xs text-[#8297a9]">Password</span>
+          <span className="font-mono text-sm font-semibold text-[#123553]">{DEMO_PASSWORD}</span>
+        </div>
+      </div>
+    </section>
+  )
 }
 
 export default function LoginPage() {
@@ -57,16 +98,7 @@ export default function LoginPage() {
           Account created. Sign in with your new credentials.
         </p>
       )}
-      <section
-        aria-labelledby="demo-account-title"
-        className="mb-6 rounded-lg border border-[#e0eaf4] bg-[#f7fbff] p-4"
-      >
-        <h2 id="demo-account-title" className="mb-3 text-sm font-bold text-[#123553]">Demo Account</h2>
-        <p className="font-mono text-sm font-semibold text-[#123553]">{DEMO_EMAIL}</p>
-        <p className="mt-2 text-xs leading-5 text-[#71869a]">
-          Ask the demo administrator for the current password. Demo passwords are not embedded in the frontend.
-        </p>
-      </section>
+      <DemoCredentials />
       <form onSubmit={handleSubmit} className="space-y-5">
         <label className="block text-sm font-semibold">
           Email address
