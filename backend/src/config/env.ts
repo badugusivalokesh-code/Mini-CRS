@@ -8,7 +8,7 @@ interface EnvConfig {
   mongoUri: string
   mongoDnsServers: string[]
   jwtSecret: string
-  clientUrl: string
+  clientUrl?: string
 }
 
 function required(name: string): string {
@@ -33,5 +33,5 @@ export const env: EnvConfig = {
     .map((server) => server.trim())
     .filter(Boolean),
   jwtSecret: required('JWT_SECRET'),
-  clientUrl: required('CLIENT_URL'),
+  clientUrl: process.env.CLIENT_URL?.trim() || undefined,
 }

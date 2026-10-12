@@ -31,9 +31,11 @@ export function createApp(options: AppOptions = {}): Application {
 
   app.use(helmet())
 
-  // CORS allowlist: only CLIENT_URL is trusted. A disallowed origin is
+  // CORS allowlist: only CLIENT_URL is trusted when configured. If unset,
+  // arbitrary browser origins are disallowed while origin-less requests
+  // (e.g. server-to-server health checks) pass. A disallowed origin is
   // rejected with a 403 (handled by errorHandler below), never a raw 500.
-  const allowedOrigins = [env.clientUrl]
+  const allowedOrigins = env.clientUrl ? [env.clientUrl] : []
 
   app.use(
     cors({

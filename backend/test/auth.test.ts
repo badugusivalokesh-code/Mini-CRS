@@ -178,10 +178,44 @@ test('malformed JSON requests return 400', async () => {
   assert.equal(response.body.message, 'Invalid JSON request body.')
 })
 
+test('configured CORS origin is allowed', async () => {
+  const response = await request(app).get('/api/health').set('Origin', 'http://localhost:5173')
+
+  assert.equal(response.status, 200)
+  assert.equal(response.headers['access-control-allow-origin'], 'http://localhost:5173')
+  assert.equal(response.headers['access-control-allow-credentials'], 'true')
+})
+
+test('requests without Origin header pass CORS check', async () => {
+  const response = await request(app).get('/api/health')
+
+  assert.equal(response.status, 200)
+  assert.equal(response.body.status, 'ok')
+})
+
 test('disallowed CORS origins receive 403', async () => {
   const response = await request(app).get('/api/health').set('Origin', 'https://untrusted.example')
 
   assert.equal(response.status, 403)
+})
+
+test('when CLIENT_URL is unset, browser requests with Origin are rejected with 403 while health checks succeed', async () => {
+  const previousClientUrl = envConfig.clientUrl
+  envConfig.clientUrl = undefined
+  try {
+    const appWithoutClientUrl = createApp({ userRepository: users })
+
+    // Origin-less request (e.g. server-to-server health check) succeeds
+    const healthResponse = await request(appWithoutClientUrl).get('/api/health')
+    assert.equal(healthResponse.status, 200)
+    assert.equal(healthResponse.body.status, 'ok')
+
+    // Browser request with Origin is rejected with 403
+    const browserResponse = await request(appWithoutClientUrl).get('/api/health').set('Origin', 'http://localhost:5173')
+    assert.equal(browserResponse.status, 403)
+  } finally {
+    envConfig.clientUrl = previousClientUrl
+  }
 })
 
 test('production auth cookies are secure and cross-site compatible', () => {

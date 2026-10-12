@@ -13,5 +13,5 @@ services:
         sync: false
       - key: JWT_SECRET
         sync: false
-      - key: CLIENT_URL
-        sync: false
+      # CLIENT_URL is optional during initial deployment. Add it in the Render
+      # dashboard under Environment after the frontend (e.g. Vercel) URL is known.

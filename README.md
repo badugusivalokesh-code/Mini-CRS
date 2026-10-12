@@ -109,7 +109,7 @@ Read `backend/src/scripts/seed-demo.ts` before running it against a production d
 | `MONGO_URI` | Backend | Yes | MongoDB connection string |
 | `JWT_SECRET` | Backend | Yes | Secret used to sign authentication tokens |
 | `DEMO_PASSWORD` | Backend (seeding only) | Yes, for seeding | Password for the demo account; must match the value displayed on the login page |
-| `CLIENT_URL` | Backend | Yes | Exact frontend origin allowed by the CORS policy |
+| `CLIENT_URL` | Backend | Optional on initial deploy | Exact frontend origin allowed by the CORS policy; when unset, backend starts but blocks browser origins |
 | `NODE_ENV` | Backend | No | Runtime mode; set to `production` on the live server |
 | `PORT` | Backend | No | HTTP listening port; hosting platforms may provide this automatically |
 | `MONGO_DNS_SERVERS` | Backend | No | Optional comma-separated DNS resolvers for MongoDB SRV lookup |
@@ -170,13 +170,14 @@ There is no password-reset endpoint in the current application.
 ### Backend — Render
 
 1. Create a new **Blueprint** deployment in Render from `render.yaml`.
-2. In the Render dashboard for the backend service, add the following environment variables:
+2. In the initial Blueprint setup form, supply the required secrets:
 
    | Variable | Value |
    |---|---|
    | `MONGO_URI` | Your MongoDB Atlas connection string |
    | `JWT_SECRET` | A long random secret (e.g. output of `openssl rand -hex 32`) |
-   | `CLIENT_URL` | The exact deployed Vercel frontend URL |
+
+   > `CLIENT_URL` is optional on initial deployment. The backend starts and passes health checks without it. Once you deploy the frontend to Vercel and know its URL, add `CLIENT_URL` in the Render dashboard under **Environment** (e.g. `https://your-crm.vercel.app`) to enable browser access.
 
 3. Deploy and confirm `GET /api/health` returns `200`.
 
