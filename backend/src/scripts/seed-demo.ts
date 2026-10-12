@@ -2,8 +2,7 @@
  * seed-demo.ts
  *
  * Seeds the demo@clientra.app account with realistic customers, deals, and tasks.
- * Safe to re-run: idempotent — cleans previous demo records for the demo user
- * and re-creates the exact required dataset.
+ * Safe to re-run: upserts only the known demo records owned by the demo user.
  *
  * Dataset:
  *   - 1 Demo User (demo@clientra.app)
@@ -15,106 +14,66 @@
  *   npx tsx src/scripts/seed-demo.ts
  */
 
-import dns from 'node:dns'
 import bcrypt from 'bcryptjs'
-import mongoose, { Types } from 'mongoose'
+import { Types } from 'mongoose'
 import dotenv from 'dotenv'
+import { connectDB, disconnectDB } from '../config/db'
+import { CustomerModel } from '../models/Customer'
+import { DealModel } from '../models/Deal'
+import { TaskModel } from '../models/Task'
+import { UserModel } from '../models/User'
 
 dotenv.config()
 
 // ─── Env ─────────────────────────────────────────────────────────────────────
 
-const MONGO_URI = process.env.MONGO_URI
-if (!MONGO_URI) {
-  console.error('❌  MONGO_URI environment variable is required.')
-  process.exit(1)
-}
-
 const DEMO_EMAIL = 'demo@clientra.app'
+const SEED_DATE = new Date()
+
 function requiredDemoPassword(): string {
   const password = process.env.DEMO_PASSWORD
   if (!password || password.trim() === '' || password.startsWith('replace-with-')) {
     throw new Error('DEMO_PASSWORD environment variable is required to seed the demo user.')
   }
+  if (password.length < 8 || Buffer.byteLength(password, 'utf8') > 72) {
+    throw new Error('DEMO_PASSWORD must satisfy the authentication password length limits.')
+  }
   return password
 }
 const DEMO_PASSWORD = requiredDemoPassword()
 
-// ─── Inline Mongoose schemas (mirrors app schemas) ────────────────────────────
+function daysFromToday(days: number): Date {
+  const date = new Date(SEED_DATE)
+  date.setUTCHours(12, 0, 0, 0)
+  date.setUTCDate(date.getUTCDate() + days)
+  return date
+}
 
-const userSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-  passwordHash: { type: String, required: true, select: false },
-}, { timestamps: true })
-
-const customerSchema = new mongoose.Schema({
-  name:    { type: String, required: true, trim: true },
-  company: { type: String, required: true, trim: true },
-  email:   { type: String, required: true, trim: true, lowercase: true },
-  phone:   { type: String, required: true, trim: true },
-  status:  { type: String, required: true, trim: true },
-  notes:   { type: String, required: true, trim: true },
-  user:    { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-}, { timestamps: true })
-
-const dealSchema = new mongoose.Schema({
-  title:             { type: String, required: true, trim: true },
-  value:             { type: Number, required: true, min: 0 },
-  stage:             { type: String, enum: ['Lead', 'Qualified', 'Proposal', 'Won', 'Lost'], required: true },
-  expectedCloseDate: { type: Date, required: true },
-  customer:          { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true },
-  user:              { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-}, { timestamps: true })
-
-const taskSchema = new mongoose.Schema({
-  title:     { type: String, required: true, trim: true },
-  dueDate:   { type: Date, required: true },
-  priority:  { type: String, enum: ['Low', 'Medium', 'High'], required: true },
-  completed: { type: Boolean, required: true, default: false },
-  customer:  { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', default: null },
-  deal:      { type: mongoose.Schema.Types.ObjectId, ref: 'Deal', default: null },
-  user:      { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-}, { timestamps: true })
-
-// Re-use existing models if registered (avoids OverwriteModelError)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const User     = (mongoose.models.User     as mongoose.Model<any>) ?? mongoose.model('User', userSchema)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const Customer = (mongoose.models.Customer as mongoose.Model<any>) ?? mongoose.model('Customer', customerSchema)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const Deal     = (mongoose.models.Deal     as mongoose.Model<any>) ?? mongoose.model('Deal', dealSchema)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const Task     = (mongoose.models.Task     as mongoose.Model<any>) ?? mongoose.model('Task', taskSchema)
+function daysAgoInCurrentMonth(daysAgo: number): Date {
+  const today = SEED_DATE
+  const day = Math.max(1, today.getUTCDate() - daysAgo)
+  return new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), day, 12))
+}
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
-  // DNS fix for Atlas in certain environments
-  try { dns.setServers(['8.8.8.8']) } catch { /* ignore */ }
-
-  await mongoose.connect(MONGO_URI as string)
-  console.log('✅  MongoDB connected')
+  await connectDB()
 
   // ── 1. Upsert demo user ───────────────────────────────────────────────────
-  let demoUser = await User.findOne({ email: DEMO_EMAIL }).select('+passwordHash').exec()
-  if (!demoUser) {
-    const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 12)
-    demoUser = await User.create({ email: DEMO_EMAIL, passwordHash })
-    console.log('✅  Created demo user')
-  } else {
-    console.log('ℹ️   Demo user already exists')
-  }
+  const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 12)
+  const demoUser = await UserModel.findOneAndUpdate(
+    { email: DEMO_EMAIL },
+    { $set: { email: DEMO_EMAIL, passwordHash } },
+    { upsert: true, new: true, runValidators: true },
+  ).exec()
+  if (!demoUser) throw new Error('Unable to create or update the demo user.')
+  console.log('✅  Demo user ready')
 
   const userId: Types.ObjectId = demoUser._id
 
-  // ── 2. Clean previous demo records for this user (Idempotent seed) ───────
-  await Task.deleteMany({ user: userId }).exec()
-  await Deal.deleteMany({ user: userId }).exec()
-  await Customer.deleteMany({ user: userId }).exec()
-  console.log('ℹ️   Cleaned previous demo records')
-
-  // ── 3. Customers — 8 required ─────────────────────────────────────────────
-  const customers = await Customer.insertMany([
+  // ── 2. Customers — upsert only records owned by the demo user ─────────────
+  const customerSeeds = [
     {
       name: 'Arjun Reddy',
       company: 'Vertex Technologies',
@@ -187,7 +146,14 @@ async function main() {
       notes: 'Advisory partner. Support contract retired.',
       user: userId,
     },
-  ])
+  ]
+  const customers = await Promise.all(customerSeeds.map((customer) =>
+    CustomerModel.findOneAndUpdate(
+      { user: userId, email: customer.email },
+      { $set: customer },
+      { upsert: true, new: true, runValidators: true },
+    ).exec(),
+  ))
 
   const [
     arjun,
@@ -200,18 +166,17 @@ async function main() {
     neha,
   ] = customers
 
-  console.log(`✅  Created ${customers.length} customers`)
+  console.log(`✅  Seeded ${customers.length} customers`)
 
-  // ── 4. Deals — 10 required ────────────────────────────────────────────────
+  // ── 3. Deals — 10 required ────────────────────────────────────────────────
   // All 5 stages represented: Lead, Qualified, Proposal, Won, Lost.
-  // Won deals have expectedCloseDate in October 2026.
-  const deals = await Deal.insertMany([
+  const dealSeeds = [
     // 1. Enterprise Platform — 850000, Lead, Arjun Reddy
     {
       title: 'Enterprise Platform',
       value: 850000,
       stage: 'Lead',
-      expectedCloseDate: new Date('2026-11-15T00:00:00.000Z'),
+      expectedCloseDate: daysFromToday(34),
       customer: arjun._id,
       user: userId,
     },
@@ -220,7 +185,7 @@ async function main() {
       title: 'Cloud Migration',
       value: 1200000,
       stage: 'Lead',
-      expectedCloseDate: new Date('2026-11-30T00:00:00.000Z'),
+      expectedCloseDate: daysFromToday(49),
       customer: rahul._id,
       user: userId,
     },
@@ -229,7 +194,7 @@ async function main() {
       title: 'CRM Integration',
       value: 650000,
       stage: 'Qualified',
-      expectedCloseDate: new Date('2026-11-10T00:00:00.000Z'),
+      expectedCloseDate: daysFromToday(29),
       customer: priya._id,
       user: userId,
     },
@@ -238,7 +203,7 @@ async function main() {
       title: 'Mobile App Development',
       value: 900000,
       stage: 'Qualified',
-      expectedCloseDate: new Date('2026-12-05T00:00:00.000Z'),
+      expectedCloseDate: daysFromToday(54),
       customer: ananya._id,
       user: userId,
     },
@@ -247,7 +212,7 @@ async function main() {
       title: 'Analytics Platform',
       value: 1500000,
       stage: 'Proposal',
-      expectedCloseDate: new Date('2026-10-25T00:00:00.000Z'),
+      expectedCloseDate: daysFromToday(14),
       customer: sneha._id,
       user: userId,
     },
@@ -256,25 +221,25 @@ async function main() {
       title: 'Security Upgrade',
       value: 750000,
       stage: 'Proposal',
-      expectedCloseDate: new Date('2026-11-05T00:00:00.000Z'),
+      expectedCloseDate: daysFromToday(25),
       customer: vikram._id,
       user: userId,
     },
-    // 7. Website Revamp — 500000, Won, Arjun Reddy (Won this month: October 2026)
+    // 7. Website Revamp — 500000, Won, Arjun Reddy
     {
       title: 'Website Revamp',
       value: 500000,
       stage: 'Won',
-      expectedCloseDate: new Date('2026-10-15T00:00:00.000Z'),
+      expectedCloseDate: daysAgoInCurrentMonth(5),
       customer: arjun._id,
       user: userId,
     },
-    // 8. Data Migration — 450000, Won, Priya Sharma (Won this month: October 2026)
+    // 8. Data Migration — 450000, Won, Priya Sharma
     {
       title: 'Data Migration',
       value: 450000,
       stage: 'Won',
-      expectedCloseDate: new Date('2026-10-20T00:00:00.000Z'),
+      expectedCloseDate: daysAgoInCurrentMonth(2),
       customer: priya._id,
       user: userId,
     },
@@ -283,7 +248,7 @@ async function main() {
       title: 'Legacy Upgrade',
       value: 300000,
       stage: 'Lost',
-      expectedCloseDate: new Date('2026-09-20T00:00:00.000Z'),
+      expectedCloseDate: daysFromToday(-22),
       customer: kiran._id,
       user: userId,
     },
@@ -292,11 +257,18 @@ async function main() {
       title: 'Support Contract',
       value: 250000,
       stage: 'Lost',
-      expectedCloseDate: new Date('2026-09-15T00:00:00.000Z'),
+      expectedCloseDate: daysFromToday(-27),
       customer: neha._id,
       user: userId,
     },
-  ])
+  ]
+  const deals = await Promise.all(dealSeeds.map((deal) =>
+    DealModel.findOneAndUpdate(
+      { user: userId, title: deal.title },
+      { $set: deal },
+      { upsert: true, new: true, runValidators: true },
+    ).exec(),
+  ))
 
   const [
     dealEnterprise,
@@ -311,147 +283,155 @@ async function main() {
     // dealSupport (no tasks linked)
   ] = deals
 
-  console.log(`✅  Created ${deals.length} deals`)
+  console.log(`✅  Seeded ${deals.length} deals`)
 
-  // ── 5. Tasks — 12 required ────────────────────────────────────────────────
-  // Date boundaries relative to Oct 7, 2026:
-  // - 3 Due today: Oct 7 2026 (Incomplete)
-  // - 5 Upcoming: Oct 9, 10, 12, 14, 16 2026 (Incomplete)
-  // - 3 Overdue: Oct 4, Oct 2, Sep 29 2026 (Incomplete)
-  // - 1 Completed: Sep 30 2026 (Completed = true)
-  const tasks = await Task.insertMany([
-    // 1. Send proposal — Oct 7 2026, High, Incomplete, Sneha Patel, Analytics Platform
+  // ── 4. Tasks — 12 required ────────────────────────────────────────────────
+  // Three due today, five upcoming, three overdue, and one completed.
+  const taskSeeds = [
+    // 1. Send proposal — due today, High, Incomplete, Sneha Patel, Analytics Platform
     {
       title: 'Send proposal',
-      dueDate: new Date('2026-10-07T12:00:00.000Z'),
+      dueDate: daysFromToday(0),
       priority: 'High',
       completed: false,
       customer: sneha._id,
       deal: dealAnalytics._id,
       user: userId,
     },
-    // 2. Follow up with client — Oct 7 2026, Medium, Incomplete, Arjun Reddy, Enterprise Platform
+    // 2. Follow up with client — due today, Medium, Incomplete, Arjun Reddy, Enterprise Platform
     {
       title: 'Follow up with client',
-      dueDate: new Date('2026-10-07T12:00:00.000Z'),
+      dueDate: daysFromToday(0),
       priority: 'Medium',
       completed: false,
       customer: arjun._id,
       deal: dealEnterprise._id,
       user: userId,
     },
-    // 3. Review contract — Oct 7 2026, High, Incomplete, Priya Sharma, CRM Integration
+    // 3. Review contract — due today, High, Incomplete, Priya Sharma, CRM Integration
     {
       title: 'Review contract',
-      dueDate: new Date('2026-10-07T12:00:00.000Z'),
+      dueDate: daysFromToday(0),
       priority: 'High',
       completed: false,
       customer: priya._id,
       deal: dealCrm._id,
       user: userId,
     },
-    // 4. Prepare presentation — Oct 9 2026, Medium, Incomplete, Rahul Mehta, Cloud Migration
+    // 4. Prepare presentation — due in 2 days, Medium, Incomplete, Rahul Mehta, Cloud Migration
     {
       title: 'Prepare presentation',
-      dueDate: new Date('2026-10-09T12:00:00.000Z'),
+      dueDate: daysFromToday(2),
       priority: 'Medium',
       completed: false,
       customer: rahul._id,
       deal: dealCloud._id,
       user: userId,
     },
-    // 5. Schedule technical discussion — Oct 10 2026, High, Incomplete, Vikram Singh, Security Upgrade
+    // 5. Schedule technical discussion — due in 3 days, High, Incomplete, Vikram Singh, Security Upgrade
     {
       title: 'Schedule technical discussion',
-      dueDate: new Date('2026-10-10T12:00:00.000Z'),
+      dueDate: daysFromToday(3),
       priority: 'High',
       completed: false,
       customer: vikram._id,
       deal: dealSecurity._id,
       user: userId,
     },
-    // 6. Send project estimate — Oct 12 2026, Low, Incomplete, Ananya Rao, Mobile App Development
+    // 6. Send project estimate — due in 5 days, Low, Incomplete, Ananya Rao, Mobile App Development
     {
       title: 'Send project estimate',
-      dueDate: new Date('2026-10-12T12:00:00.000Z'),
+      dueDate: daysFromToday(5),
       priority: 'Low',
       completed: false,
       customer: ananya._id,
       deal: dealMobile._id,
       user: userId,
     },
-    // 7. Update requirements — Oct 14 2026, Medium, Incomplete, Arjun Reddy, Enterprise Platform
+    // 7. Update requirements — due in 7 days, Medium, Incomplete, Arjun Reddy, Enterprise Platform
     {
       title: 'Update requirements',
-      dueDate: new Date('2026-10-14T12:00:00.000Z'),
+      dueDate: daysFromToday(7),
       priority: 'Medium',
       completed: false,
       customer: arjun._id,
       deal: dealEnterprise._id,
       user: userId,
     },
-    // 8. Prepare onboarding — Oct 16 2026, High, Incomplete, Priya Sharma, Data Migration
+    // 8. Prepare onboarding — due in 9 days, High, Incomplete, Priya Sharma, Data Migration
     {
       title: 'Prepare onboarding',
-      dueDate: new Date('2026-10-16T12:00:00.000Z'),
+      dueDate: daysFromToday(9),
       priority: 'High',
       completed: false,
       customer: priya._id,
       deal: dealDataMigration._id,
       user: userId,
     },
-    // 9. Follow up on payment — Oct 4 2026, High, Incomplete (Overdue), Sneha Patel, Analytics Platform
+    // 9. Follow up on payment — overdue by 3 days, High, Sneha Patel, Analytics Platform
     {
       title: 'Follow up on payment',
-      dueDate: new Date('2026-10-04T12:00:00.000Z'),
+      dueDate: daysFromToday(-3),
       priority: 'High',
       completed: false,
       customer: sneha._id,
       deal: dealAnalytics._id,
       user: userId,
     },
-    // 10. Send revised quotation — Oct 2 2026, Medium, Incomplete (Overdue), Rahul Mehta, Cloud Migration
+    // 10. Send revised quotation — overdue by 5 days, Medium, Rahul Mehta, Cloud Migration
     {
       title: 'Send revised quotation',
-      dueDate: new Date('2026-10-02T12:00:00.000Z'),
+      dueDate: daysFromToday(-5),
       priority: 'Medium',
       completed: false,
       customer: rahul._id,
       deal: dealCloud._id,
       user: userId,
     },
-    // 11. Review old proposal — Sep 29 2026, Low, Incomplete (Overdue), Kiran Kumar, Legacy Upgrade
+    // 11. Review old proposal — overdue by 8 days, Low, Kiran Kumar, Legacy Upgrade
     {
       title: 'Review old proposal',
-      dueDate: new Date('2026-09-29T12:00:00.000Z'),
+      dueDate: daysFromToday(-8),
       priority: 'Low',
       completed: false,
       customer: kiran._id,
       deal: dealLegacy._id,
       user: userId,
     },
-    // 12. Complete onboarding — Sep 30 2026, High, Completed, Priya Sharma, Data Migration
+    // 12. Complete onboarding — completed, Priya Sharma, Data Migration
     {
       title: 'Complete onboarding',
-      dueDate: new Date('2026-09-30T12:00:00.000Z'),
+      dueDate: daysFromToday(-2),
       priority: 'High',
       completed: true,
       customer: priya._id,
       deal: dealDataMigration._id,
       user: userId,
     },
-  ])
+  ]
+  const tasks = await Promise.all(taskSeeds.map((task) =>
+    TaskModel.findOneAndUpdate(
+      { user: userId, title: task.title },
+      { $set: task },
+      { upsert: true, new: true, runValidators: true },
+    ).exec(),
+  ))
 
-  console.log(`✅  Created ${tasks.length} tasks`)
+  console.log(`✅  Seeded ${tasks.length} tasks`)
   console.log('\n🎉  Demo data seeded successfully!')
   console.log(`    Customers: ${customers.length}`)
   console.log(`    Deals:     ${deals.length}`)
   console.log(`    Tasks:     ${tasks.length}`)
 
-  await mongoose.disconnect()
+  await disconnectDB()
 }
 
-main().catch((err) => {
-  console.error('❌  Seed failed:', err)
-  mongoose.disconnect().finally(() => process.exit(1))
+main().catch(async (error: unknown) => {
+  console.error(
+    '❌  Seed failed.',
+    error instanceof Error ? `Cause: ${error.name}.` : '',
+    'Check environment configuration and database connectivity.',
+  )
+  await disconnectDB().catch(() => undefined)
+  process.exit(1)
 })

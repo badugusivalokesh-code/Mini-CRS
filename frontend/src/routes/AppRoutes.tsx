@@ -8,13 +8,19 @@ import CustomersPage from '@/pages/CustomersPage'
 import CustomerDetailPage from '@/pages/CustomerDetailPage'
 import DealsPage from '@/pages/DealsPage'
 import TasksPage from '@/pages/TasksPage'
+import LandingPage from '@/pages/LandingPage'
 
 /**
- * Root route table with public authentication pages and a protected app entry.
+ * Root route table.
+ * /landing  — public marketing/landing page (unauthenticated)
+ * /login    — sign-in page
+ * /register — registration page
+ * /         — protected app entry (Dashboard)
  */
 export default function AppRoutes() {
   return (
     <Routes>
+      <Route path="/landing" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route element={<ProtectedRoute />}>

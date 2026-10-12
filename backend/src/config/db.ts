@@ -13,8 +13,8 @@ export async function connectDB(): Promise<void> {
     }
     await mongoose.connect(env.mongoUri)
     console.log('MongoDB connected')
-  } catch (error) {
-    console.error('MongoDB connection failed:', error instanceof Error ? error.message : error)
+  } catch {
+    console.error('MongoDB connection failed. Verify MONGO_URI and database availability.')
     process.exit(1)
   }
 }

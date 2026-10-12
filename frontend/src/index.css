@@ -2,9 +2,51 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+	html {
+		scroll-behavior: smooth;
+	}
+
+	body {
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+
+	button,
+	a,
+	input,
+	select,
+	textarea {
+		transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+		transition-duration: 150ms;
+		transition-timing-function: ease-out;
+	}
+
+	button:not(:disabled):active {
+		transform: scale(0.985);
+	}
+
+	button:not(:disabled) {
+		cursor: pointer;
+	}
+
+	button:disabled {
+		cursor: not-allowed;
+	}
+
+	:where(button, a, input, select, textarea):focus-visible {
+		outline: 2px solid #514bff;
+		outline-offset: 2px;
+	}
+
+	::selection {
+		background: rgb(81 75 255 / 15%);
+	}
+}
+
 @layer components {
 	.crm-input {
-		@apply mt-2 h-11 w-full rounded-md border border-[#dfe9f1] bg-[#f3f8fc] px-3 text-sm font-normal text-[#123553] outline-none transition;
+		@apply mt-2 h-11 w-full rounded-lg border border-[#dfe9f1] bg-white px-3 text-sm font-normal text-[#123553] shadow-sm outline-none transition duration-150;
 	}
 
 	.crm-input:focus {
@@ -26,6 +68,10 @@
 	.crm-dialog {
 		animation: crm-dialog-in 160ms ease-out both;
 	}
+
+	.crm-status {
+		animation: crm-fade-in 160ms ease-out both;
+	}
 }
 
 @keyframes crm-fade-in {
@@ -36,4 +82,19 @@
 @keyframes crm-dialog-in {
 	from { opacity: 0; transform: translateY(6px) scale(0.99); }
 	to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
+
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		scroll-behavior: auto !important;
+		transition-duration: 0.01ms !important;
+	}
 }

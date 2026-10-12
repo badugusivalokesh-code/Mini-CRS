@@ -20,10 +20,18 @@ export default function AuthLayout({
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#f3f8fc] px-4 py-10 text-[#123553]">
       <div className="w-full max-w-[440px]">
-        <Link to="/login" className="mb-7 flex items-center justify-center gap-3 text-lg font-bold">
-          <span className="grid size-10 place-items-center rounded-md bg-[#0d2d4b] text-sm text-white">MC</span>
-          <span>Mini CRM</span>
+        {/* Logo */}
+        <Link
+          to="/landing"
+          aria-label="Clientra — go to home"
+          className="mb-7 flex items-center justify-center gap-2.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#514bff]"
+        >
+          <span className="grid size-9 place-items-center rounded-lg bg-[#514bff] text-[11px] font-black text-white tracking-tight">
+            CL
+          </span>
+          <span className="text-[18px] font-black tracking-tight text-[#0d1f2d]">Clientra</span>
         </Link>
+
         <section className="rounded-xl border border-[#e2ebf3] bg-white px-7 py-8 shadow-[0_16px_40px_rgba(22,54,82,0.06)] sm:px-9 sm:py-9">
           <header className="mb-7">
             <h1 className="text-[26px] font-bold leading-tight">{title}</h1>

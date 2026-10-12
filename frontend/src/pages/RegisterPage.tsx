@@ -1,11 +1,12 @@
 import { useState, type FormEvent } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/useAuth'
 import type { Credentials } from '@/lib/authApi'
 import AuthLayout from './AuthLayout'
 
 export default function RegisterPage() {
   const { register, status, user } = useAuth()
+  const location = useLocation()
   const navigate = useNavigate()
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -27,7 +28,11 @@ export default function RegisterPage() {
 
     try {
       await register(credentials)
-      navigate('/login', { replace: true, state: { registered: true } })
+      const locationState = location.state as { from?: { pathname?: string } } | null
+      navigate('/login', {
+        replace: true,
+        state: { registered: true, from: locationState?.from },
+      })
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Unable to create your account. Try again.')
     } finally {
@@ -52,7 +57,7 @@ export default function RegisterPage() {
             autoComplete="email"
             required
             maxLength={254}
-            className="mt-2 h-12 w-full rounded-md border border-[#dfe9f1] bg-[#f3f8fc] px-4 font-normal text-[#123553] outline-none transition focus:border-[#514bff] focus:ring-2 focus:ring-[#514bff]/15"
+            className="crm-input h-12 px-4"
             placeholder="you@example.com"
           />
         </label>
@@ -65,7 +70,7 @@ export default function RegisterPage() {
             required
             minLength={8}
             maxLength={72}
-            className="mt-2 h-12 w-full rounded-md border border-[#dfe9f1] bg-[#f3f8fc] px-4 font-normal text-[#123553] outline-none transition focus:border-[#514bff] focus:ring-2 focus:ring-[#514bff]/15"
+            className="crm-input h-12 px-4"
             placeholder="At least 8 characters"
           />
         </label>

@@ -48,6 +48,7 @@ customerSchema.index({ user: 1, createdAt: -1 })
 
 const Customer = (models.Customer as Model<CustomerFields> | undefined)
   ?? model<CustomerFields>('Customer', customerSchema)
+export { Customer as CustomerModel }
 
 function toCustomerRecord(customer: CustomerRecordSource): CustomerRecord {
   return {

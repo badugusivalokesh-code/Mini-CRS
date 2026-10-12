@@ -104,7 +104,6 @@ export default function CustomersPage() {
     <main className="min-h-screen bg-[#f3f8fc] text-[#123553]">
       <header className="flex min-h-[76px] flex-wrap items-center justify-between gap-3 border-b border-[#e5edf4] bg-white px-4 py-3 sm:px-8 lg:px-10">
         <div>
-          <Link to="/" className="text-xs font-medium text-[#8297a9] hover:text-[#514bff]">Mini CRM</Link>
           <h1 className="mt-0.5 text-xl font-bold">Customers</h1>
         </div>
         <button type="button" onClick={() => setFormDialog({ mode: 'create' })}

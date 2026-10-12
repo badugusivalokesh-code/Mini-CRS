@@ -68,6 +68,7 @@ dealSchema.index({ user: 1, stage: 1, expectedCloseDate: 1 })
 dealSchema.index({ user: 1, customer: 1 })
 
 const Deal = (models.Deal as Model<DealFields> | undefined) ?? model<DealFields>('Deal', dealSchema)
+export { Deal as DealModel }
 
 type DealRecordSource = Omit<DealFields, 'customer' | 'user'> & {
   _id: Types.ObjectId

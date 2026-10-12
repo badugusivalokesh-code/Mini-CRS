@@ -87,6 +87,7 @@ taskSchema.index({ user: 1, dueDate: 1 })
 taskSchema.index({ user: 1, completed: 1, dueDate: 1 })
 
 const Task = (models.Task as Model<TaskFields> | undefined) ?? model<TaskFields>('Task', taskSchema)
+export { Task as TaskModel }
 
 type PopulatedTask = {
   _id: Types.ObjectId

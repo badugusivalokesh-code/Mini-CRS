@@ -26,6 +26,7 @@ const userSchema = new Schema<UserFields>(
 )
 
 const User = (models.User as Model<UserFields> | undefined) ?? model<UserFields>('User', userSchema)
+export { User as UserModel }
 
 function toUserRecord(user: HydratedDocument<UserFields>): UserRecord {
   return {

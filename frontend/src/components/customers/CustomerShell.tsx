@@ -30,17 +30,15 @@ const navItems: NavItem[] = [
 ]
 
 function DesktopNavLink({ item }: { item: NavItem }) {
-  const location = useLocation()
-
   return (
     <NavLink
-      to={item.to === '/' && location.pathname === '/dashboard' ? '/dashboard' : item.to}
+      to={item.to}
       end={item.end}
       aria-label={item.label}
       title={item.label}
       className={({ isActive }) =>
         `flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium transition ${
-          isActive || (item.to === '/' && location.pathname === '/dashboard')
+          isActive
             ? 'border-l-2 border-[#514bff] bg-[#efeeff] pl-[10px] text-[#514bff]'
             : 'text-[#6b8198] hover:bg-[#f4f7fa] hover:text-[#123553]'
         }`
@@ -50,11 +48,11 @@ function DesktopNavLink({ item }: { item: NavItem }) {
         <>
           <item.icon
             size={18}
-            strokeWidth={isActive || (item.to === '/' && location.pathname === '/dashboard') ? 2.2 : 1.8}
+            strokeWidth={isActive ? 2.2 : 1.8}
             className="shrink-0"
           />
           <span>{item.label}</span>
-          {(isActive || (item.to === '/' && location.pathname === '/dashboard')) && (
+          {isActive && (
             <span aria-hidden="true" className="ml-auto size-1.5 rounded-full bg-[#514bff]" />
           )}
         </>
@@ -283,12 +281,12 @@ export default function CustomerShell({ children }: PropsWithChildren) {
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
-                to={item.to === '/' && location.pathname === '/dashboard' ? '/dashboard' : item.to}
+                to={item.to}
                 end={item.end}
                 onClick={closeDrawer}
                 className={({ isActive }) =>
                   `flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition ${
-                    isActive || (item.to === '/' && location.pathname === '/dashboard')
+                    isActive
                       ? 'border-l-2 border-[#514bff] bg-[#efeeff] pl-[10px] text-[#514bff]'
                       : 'text-[#6b8198] hover:bg-[#f4f7fa] hover:text-[#123553]'
                   }`
@@ -298,15 +296,11 @@ export default function CustomerShell({ children }: PropsWithChildren) {
                   <>
                     <item.icon
                       size={18}
-                      strokeWidth={
-                        isActive || (item.to === '/' && location.pathname === '/dashboard')
-                          ? 2.2
-                          : 1.8
-                      }
+                      strokeWidth={isActive ? 2.2 : 1.8}
                       className="shrink-0"
                     />
                     {item.label}
-                    {(isActive || (item.to === '/' && location.pathname === '/dashboard')) && (
+                    {isActive && (
                       <span aria-hidden="true" className="ml-auto size-1.5 rounded-full bg-[#514bff]" />
                     )}
                   </>

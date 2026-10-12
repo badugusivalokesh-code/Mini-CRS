@@ -4,6 +4,8 @@ import { useAuth } from '@/useAuth'
 import type { Credentials } from '@/lib/authApi'
 import AuthLayout from './AuthLayout'
 
+const DEMO_EMAIL = 'demo@clientra.app'
+
 interface LoginLocationState {
   from?: { pathname?: string }
   registered?: boolean
@@ -45,8 +47,8 @@ export default function LoginPage() {
   return (
     <AuthLayout
       title="Welcome back"
-      description="Sign in to continue to your Mini CRM account."
-      footerText="New to Mini CRM?"
+      description="Sign in to continue to your Clientra account."
+      footerText="New to Clientra?"
       footerLinkText="Create an account"
       footerTo="/register"
     >
@@ -55,6 +57,16 @@ export default function LoginPage() {
           Account created. Sign in with your new credentials.
         </p>
       )}
+      <section
+        aria-labelledby="demo-account-title"
+        className="mb-6 rounded-lg border border-[#e0eaf4] bg-[#f7fbff] p-4"
+      >
+        <h2 id="demo-account-title" className="mb-3 text-sm font-bold text-[#123553]">Demo Account</h2>
+        <p className="font-mono text-sm font-semibold text-[#123553]">{DEMO_EMAIL}</p>
+        <p className="mt-2 text-xs leading-5 text-[#71869a]">
+          Ask the demo administrator for the current password. Demo passwords are not embedded in the frontend.
+        </p>
+      </section>
       <form onSubmit={handleSubmit} className="space-y-5">
         <label className="block text-sm font-semibold">
           Email address
@@ -64,7 +76,7 @@ export default function LoginPage() {
             autoComplete="email"
             required
             maxLength={254}
-            className="mt-2 h-12 w-full rounded-md border border-[#dfe9f1] bg-[#f3f8fc] px-4 font-normal text-[#123553] outline-none transition focus:border-[#514bff] focus:ring-2 focus:ring-[#514bff]/15"
+            className="crm-input h-12 px-4"
             placeholder="you@example.com"
           />
         </label>
@@ -76,7 +88,7 @@ export default function LoginPage() {
             autoComplete="current-password"
             required
             maxLength={72}
-            className="mt-2 h-12 w-full rounded-md border border-[#dfe9f1] bg-[#f3f8fc] px-4 font-normal text-[#123553] outline-none transition focus:border-[#514bff] focus:ring-2 focus:ring-[#514bff]/15"
+            className="crm-input h-12 px-4"
             placeholder="Enter your password"
           />
         </label>

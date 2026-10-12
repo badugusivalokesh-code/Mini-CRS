@@ -155,6 +155,9 @@ export default function CustomerDetailPage() {
               <section className="crm-panel p-5 sm:p-6">
                 <div className="flex items-center justify-between">
                   <h2 className="font-bold">Tasks</h2>
+                  <Link to="/tasks" className="text-xs font-semibold text-[#514bff] hover:underline">
+                    View all
+                  </Link>
                 </div>
                 {details.related.tasks.length === 0 ? (
                   <p className="mt-4 text-sm text-[#8297a9]">No related tasks yet.</p>
