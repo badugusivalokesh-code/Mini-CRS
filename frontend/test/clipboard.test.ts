@@ -10,18 +10,29 @@ afterEach(() => {
   Object.defineProperty(globalThis, 'document', { configurable: true, value: originalDocument })
 })
 
-test('copies credentials with the Clipboard API and awaits completion', async () => {
+test('copies only the demo email with the Clipboard API and awaits completion', async () => {
   let copiedText = ''
   Object.defineProperty(navigator, 'clipboard', {
     configurable: true,
     value: { writeText: async (text: string) => { copiedText = text } },
   })
 
-  assert.equal(await copyText('Email: demo@clientra.app\nPassword: Clientra@123'), true)
-  assert.equal(copiedText, 'Email: demo@clientra.app\nPassword: Clientra@123')
+  assert.equal(await copyText('demo@clientra.app'), true)
+  assert.equal(copiedText, 'demo@clientra.app')
 })
 
-test('falls back to a selectable text area when the Clipboard API rejects', async () => {
+test('copies only the demo password with the Clipboard API and awaits completion', async () => {
+  let copiedText = ''
+  Object.defineProperty(navigator, 'clipboard', {
+    configurable: true,
+    value: { writeText: async (text: string) => { copiedText = text } },
+  })
+
+  assert.equal(await copyText('Clientra@123'), true)
+  assert.equal(copiedText, 'Clientra@123')
+})
+
+test('falls back to copying only the password when the Clipboard API rejects', async () => {
   let copiedText = ''
   const textarea = {
     value: '',
@@ -46,11 +57,11 @@ test('falls back to a selectable text area when the Clipboard API rejects', asyn
     },
   })
 
-  assert.equal(await copyText('Email: demo@clientra.app\nPassword: Clientra@123'), true)
-  assert.equal(copiedText, 'Email: demo@clientra.app\nPassword: Clientra@123')
+  assert.equal(await copyText('Clientra@123'), true)
+  assert.equal(copiedText, 'Clientra@123')
 })
 
-test('reports failure when neither clipboard copy path succeeds', async () => {
+test('reports failure when neither email copy path succeeds', async () => {
   Object.defineProperty(navigator, 'clipboard', { configurable: true, value: undefined })
   const textarea = {
     value: '',
@@ -68,5 +79,5 @@ test('reports failure when neither clipboard copy path succeeds', async () => {
     },
   })
 
-  assert.equal(await copyText('Email: demo@clientra.app\nPassword: Clientra@123'), false)
+  assert.equal(await copyText('demo@clientra.app'), false)
 })

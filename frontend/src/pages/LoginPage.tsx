@@ -13,22 +13,21 @@ interface LoginLocationState {
   registered?: boolean
 }
 
+type DemoCredentialField = 'email' | 'password'
+
 function DemoCredentials() {
-  const [copyMessage, setCopyMessage] = useState('')
-  const [copyFailed, setCopyFailed] = useState(false)
+  const [copyResult, setCopyResult] = useState<Record<DemoCredentialField, 'success' | 'error' | null>>({
+    email: null,
+    password: null,
+  })
 
-  async function handleCopy() {
-    const text = `Email: ${DEMO_EMAIL}\nPassword: ${DEMO_PASSWORD}`
-    const copied = await copyText(text)
+  async function handleCopy(field: DemoCredentialField, value: string) {
+    const copied = await copyText(value)
 
-    if (copied) {
-      setCopyMessage('Credentials copied.')
-      setCopyFailed(false)
-    } else {
-      setCopyMessage('Unable to copy credentials. Select the details above and copy them manually.')
-      setCopyFailed(true)
-    }
-    window.setTimeout(() => setCopyMessage(''), 3000)
+    setCopyResult((current) => ({ ...current, [field]: copied ? 'success' : 'error' }))
+    window.setTimeout(() => {
+      setCopyResult((current) => ({ ...current, [field]: null }))
+    }, 3000)
   }
 
   return (
@@ -36,31 +35,47 @@ function DemoCredentials() {
       aria-labelledby="demo-account-title"
       className="mb-6 rounded-lg border border-[#e0eaf4] bg-[#f7fbff] p-4"
     >
-      <div className="mb-3 flex items-center justify-between gap-2">
+      <div className="mb-3">
         <h2 id="demo-account-title" className="text-sm font-bold text-[#123553]">Demo Credentials</h2>
-        <button
-          type="button"
-          onClick={handleCopy}
-          className="inline-flex items-center rounded px-2.5 py-1 text-xs font-semibold text-[#514bff] border border-[#d5d3ff] bg-white hover:bg-[#f0f0ff] transition"
-        >
-          Copy Credentials
-        </button>
       </div>
       <div className="space-y-1.5">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="w-16 shrink-0 text-xs text-[#8297a9]">Email</span>
-          <span className="font-mono text-sm font-semibold text-[#123553] break-all">{DEMO_EMAIL}</span>
+          <span className="min-w-0 flex-1 font-mono text-sm font-semibold text-[#123553] break-all">{DEMO_EMAIL}</span>
+          <button
+            type="button"
+            onClick={() => { void handleCopy('email', DEMO_EMAIL) }}
+            className="inline-flex items-center rounded border border-[#d5d3ff] bg-white px-2.5 py-1 text-xs font-semibold text-[#514bff] transition hover:bg-[#f0f0ff]"
+          >
+            Copy Email
+          </button>
         </div>
-        <div className="flex items-center gap-2">
+        {copyResult.email && (
+          <p role={copyResult.email === 'error' ? 'alert' : 'status'} className="ml-16 text-xs text-[#71869a]">
+            {copyResult.email === 'success'
+              ? 'Email copied.'
+              : 'Unable to copy email. Select it above and copy it manually.'}
+          </p>
+        )}
+        <div className="flex flex-wrap items-center gap-2">
           <span className="w-16 shrink-0 text-xs text-[#8297a9]">Password</span>
-          <span className="font-mono text-sm font-semibold text-[#123553]">{DEMO_PASSWORD}</span>
+          <span className="min-w-0 flex-1 font-mono text-sm font-semibold text-[#123553]">{DEMO_PASSWORD}</span>
+          <button
+            type="button"
+            onClick={() => { void handleCopy('password', DEMO_PASSWORD) }}
+            className="inline-flex items-center rounded border border-[#d5d3ff] bg-white px-2.5 py-1 text-xs font-semibold text-[#514bff] transition hover:bg-[#f0f0ff]"
+          >
+            Copy Password
+          </button>
         </div>
+        {copyResult.password && (
+          <p role={copyResult.password === 'error' ? 'alert' : 'status'} className="ml-16 text-xs text-[#71869a]">
+            {copyResult.password === 'success'
+              ? 'Password copied.'
+              : 'Unable to copy password. Select it above and copy it manually.'}
+          </p>
+        )}
       </div>
-      {copyMessage && (
-        <p role={copyFailed ? 'alert' : 'status'} className="mt-3 text-xs text-[#71869a]">
-          {copyMessage}
-        </p>
-      )}
     </section>
   )
 }
