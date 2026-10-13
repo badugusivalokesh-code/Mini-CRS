@@ -13,14 +13,17 @@ interface LoginLocationState {
 }
 
 function DemoCredentials() {
-  const [copied, setCopied] = useState(false)
+  const [copyMessage, setCopyMessage] = useState('')
 
-  function handleCopy() {
+  async function handleCopy() {
     const text = `Email: ${DEMO_EMAIL}\nPassword: ${DEMO_PASSWORD}`
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    }).catch(() => {/* clipboard unavailable — credentials are visible on screen */})
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopyMessage('Credentials copied.')
+    } catch {
+      setCopyMessage('Unable to copy credentials. Select the details above and copy them manually.')
+    }
+    window.setTimeout(() => setCopyMessage(''), 3000)
   }
 
   return (
@@ -35,7 +38,7 @@ function DemoCredentials() {
           onClick={handleCopy}
           className="inline-flex items-center rounded px-2.5 py-1 text-xs font-semibold text-[#514bff] border border-[#d5d3ff] bg-white hover:bg-[#f0f0ff] transition"
         >
-          {copied ? '✓ Copied' : 'Copy Credentials'}
+          Copy Credentials
         </button>
       </div>
       <div className="space-y-1.5">
@@ -48,6 +51,11 @@ function DemoCredentials() {
           <span className="font-mono text-sm font-semibold text-[#123553]">{DEMO_PASSWORD}</span>
         </div>
       </div>
+      {copyMessage && (
+        <p role="status" className="mt-3 text-xs text-[#71869a]">
+          {copyMessage}
+        </p>
+      )}
     </section>
   )
 }

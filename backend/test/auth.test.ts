@@ -139,6 +139,24 @@ test('GET /me rejects requests without an authentication cookie', async () => {
   assert.equal(response.body.user, undefined)
 })
 
+test('an initial unauthenticated session check does not block the following login', async () => {
+  await request(app).post('/api/auth/register')
+    .send({ email: 'user@example.com', password: 'correct horse battery' })
+
+  const initialSessionCheck = await request(app).get('/api/auth/me')
+  assert.equal(initialSessionCheck.status, 401)
+
+  const login = await request(app).post('/api/auth/login')
+    .send({ email: 'user@example.com', password: 'correct horse battery' })
+  const cookie = login.headers['set-cookie']?.[0]?.split(';')[0]
+  assert.equal(login.status, 200)
+  assert.ok(cookie)
+
+  const authenticatedSessionCheck = await request(app).get('/api/auth/me').set('Cookie', cookie)
+  assert.equal(authenticatedSessionCheck.status, 200)
+  assert.deepEqual(authenticatedSessionCheck.body.user, { id: 'test-user-1', email: 'user@example.com' })
+})
+
 test('GET /me returns the safe authenticated profile', async () => {
   await request(app).post('/api/auth/register')
     .send({ email: 'user@example.com', password: 'correct horse battery' })
