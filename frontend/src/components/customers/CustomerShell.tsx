@@ -10,6 +10,7 @@ import {
 import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect, useRef, useCallback, type PropsWithChildren } from 'react'
 import { useAuth } from '@/useAuth'
+import { signOutAndNavigate } from '@/lib/signOut'
 
 // ─── Sidebar width ────────────────────────────────────────────────────────────
 // Desktop: 220px expanded sidebar with logo + label
@@ -23,7 +24,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { to: '/', end: true, icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/dashboard', end: true, icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/customers', icon: UsersRound, label: 'Customers' },
   { to: '/deals', icon: BriefcaseBusiness, label: 'Deals' },
   { to: '/tasks', icon: ClipboardCheck, label: 'Tasks' },
@@ -129,8 +130,7 @@ export default function CustomerShell({ children }: PropsWithChildren) {
     setSigningOut(true)
     setLogoutError('')
     try {
-      await logout()
-      navigate('/login', { replace: true })
+      await signOutAndNavigate(logout, navigate)
     } catch {
       setLogoutError('Unable to sign out. Please try again.')
     } finally {
@@ -150,7 +150,7 @@ export default function CustomerShell({ children }: PropsWithChildren) {
         {/* Logo */}
         <div className="flex h-16 shrink-0 items-center gap-2.5 border-b border-[#e5edf4] px-5">
           <Link
-            to="/"
+            to="/dashboard"
             aria-label="Clientra — go to dashboard"
             className="flex items-center gap-2.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#514bff]"
           >
@@ -216,7 +216,7 @@ export default function CustomerShell({ children }: PropsWithChildren) {
           <Menu size={22} />
         </button>
         <Link
-          to="/"
+          to="/dashboard"
           aria-label="Clientra — go to dashboard"
           className="flex items-center gap-2"
         >

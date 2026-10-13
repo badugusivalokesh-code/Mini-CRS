@@ -91,7 +91,7 @@ export default function LoginPage() {
   if (status === 'loading') {
     return <main className="grid min-h-screen place-items-center bg-[#f3f8fc] text-sm text-[#71869a]">Checking your session...</main>
   }
-  if (user) return <Navigate to={locationState?.from?.pathname ?? '/'} replace />
+  if (user) return <Navigate to={locationState?.from?.pathname ?? '/dashboard'} replace />
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -105,7 +105,7 @@ export default function LoginPage() {
 
     try {
       await login(credentials)
-      navigate(locationState?.from?.pathname ?? '/', { replace: true })
+      navigate(locationState?.from?.pathname ?? '/dashboard', { replace: true })
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Unable to sign in. Try again.')
     } finally {
