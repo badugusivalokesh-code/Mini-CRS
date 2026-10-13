@@ -25,7 +25,7 @@ function required(name: string): string {
  * on purpose.
  */
 export const env: EnvConfig = {
-  nodeEnv: process.env.NODE_ENV ?? 'development',
+  nodeEnv: process.env.NODE_ENV ?? (process.env.RENDER ? 'production' : 'development'),
   port: Number(process.env.PORT ?? 4000),
   mongoUri: required('MONGO_URI'),
   mongoDnsServers: (process.env.MONGO_DNS_SERVERS ?? '')
@@ -33,5 +33,5 @@ export const env: EnvConfig = {
     .map((server) => server.trim())
     .filter(Boolean),
   jwtSecret: required('JWT_SECRET'),
-  clientUrl: process.env.CLIENT_URL?.trim() || undefined,
+  clientUrl: process.env.CLIENT_URL?.trim().replace(/\/+$/, '') || undefined,
 }

@@ -29,6 +29,8 @@ export interface AppOptions {
 export function createApp(options: AppOptions = {}): Application {
   const app = express()
 
+  app.set('trust proxy', 1)
+
   app.use(helmet())
 
   // CORS allowlist: only CLIENT_URL is trusted when configured. If unset,

@@ -80,7 +80,10 @@ export function getFormErrorMessage(error: unknown, fallback: string): string {
 export async function apiRequest<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
   const { body, headers, ...rest } = options
 
-  const response = await fetch(`${API_URL}${path}`, {
+  const baseUrl = (API_URL ?? '').replace(/\/+$/, '')
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+
+  const response = await fetch(`${baseUrl}${normalizedPath}`, {
     ...rest,
     credentials: 'include',
     headers: {

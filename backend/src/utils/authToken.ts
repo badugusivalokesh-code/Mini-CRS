@@ -19,12 +19,22 @@ export function verifyAuthToken(token: string): string {
   return payload.sub
 }
 
+export function isProductionEnvironment(): boolean {
+  return (
+    env.nodeEnv === 'production'
+    || process.env.NODE_ENV === 'production'
+    || Boolean(env.clientUrl && env.clientUrl.startsWith('https://'))
+    || Boolean(process.env.RENDER)
+  )
+}
+
 export function authCookieOptions(includeMaxAge = true) {
-  const isProduction = env.nodeEnv === 'production'
+  const isProduction = isProductionEnvironment()
   return {
     httpOnly: true,
     secure: isProduction,
-    sameSite: isProduction ? 'none' as const : 'lax' as const,
+    sameSite: isProduction ? ('none' as const) : ('lax' as const),
+    ...(isProduction ? { partitioned: true } : {}),
     path: '/',
     ...(includeMaxAge ? { maxAge: AUTH_TOKEN_LIFETIME_SECONDS * 1000 } : {}),
   }

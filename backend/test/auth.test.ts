@@ -218,7 +218,7 @@ test('when CLIENT_URL is unset, browser requests with Origin are rejected with 4
   }
 })
 
-test('production auth cookies are secure and cross-site compatible', () => {
+test('production auth cookies are secure, partitioned, and cross-site compatible', () => {
   const previousEnvironment = envConfig.nodeEnv
   envConfig.nodeEnv = 'production'
   try {
@@ -226,8 +226,68 @@ test('production auth cookies are secure and cross-site compatible', () => {
     assert.equal(options.httpOnly, true)
     assert.equal(options.secure, true)
     assert.equal(options.sameSite, 'none')
+    assert.equal(options.partitioned, true)
     assert.equal(options.maxAge, 7 * 24 * 60 * 60 * 1000)
   } finally {
     envConfig.nodeEnv = previousEnvironment
   }
+})
+
+test('when CLIENT_URL is https, auth cookies are secure and cross-site compatible even if NODE_ENV is development', () => {
+  const previousEnvironment = envConfig.nodeEnv
+  const previousClientUrl = envConfig.clientUrl
+  envConfig.nodeEnv = 'development'
+  envConfig.clientUrl = 'https://mini-crs-alpha.vercel.app'
+  try {
+    const options = authCookieOptions()
+    assert.equal(options.httpOnly, true)
+    assert.equal(options.secure, true)
+    assert.equal(options.sameSite, 'none')
+    assert.equal(options.partitioned, true)
+  } finally {
+    envConfig.nodeEnv = previousEnvironment
+    envConfig.clientUrl = previousClientUrl
+  }
+})
+
+test('when RENDER is set, auth cookies are secure and cross-site compatible', () => {
+  const previousRender = process.env.RENDER
+  process.env.RENDER = 'true'
+  try {
+    const options = authCookieOptions()
+    assert.equal(options.httpOnly, true)
+    assert.equal(options.secure, true)
+    assert.equal(options.sameSite, 'none')
+    assert.equal(options.partitioned, true)
+  } finally {
+    if (previousRender === undefined) {
+      delete process.env.RENDER
+    } else {
+      process.env.RENDER = previousRender
+    }
+  }
+})
+
+test('authenticate middleware accepts valid Bearer authorization header', async () => {
+  await request(app).post('/api/auth/register')
+    .send({ email: 'bearer@example.com', password: 'correct horse battery' })
+
+  const secret = process.env.JWT_SECRET
+  assert.ok(secret)
+  const token = jwt.sign({}, secret, { subject: 'test-user-1', expiresIn: 3600 })
+
+  const response = await request(app)
+    .get('/api/auth/me')
+    .set('Authorization', `Bearer ${token}`)
+
+  assert.equal(response.status, 200)
+  assert.deepEqual(response.body.user, { id: 'test-user-1', email: 'bearer@example.com' })
+})
+
+test('authenticate middleware rejects invalid Bearer authorization header with 401', async () => {
+  const response = await request(app)
+    .get('/api/auth/me')
+    .set('Authorization', 'Bearer invalid-token')
+
+  assert.equal(response.status, 401)
 })
