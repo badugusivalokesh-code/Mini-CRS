@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/useAuth'
 import type { Credentials } from '@/lib/authApi'
+import { copyText } from '@/lib/clipboard'
 import AuthLayout from './AuthLayout'
 
 const DEMO_EMAIL = 'demo@clientra.app'
@@ -14,14 +15,18 @@ interface LoginLocationState {
 
 function DemoCredentials() {
   const [copyMessage, setCopyMessage] = useState('')
+  const [copyFailed, setCopyFailed] = useState(false)
 
   async function handleCopy() {
     const text = `Email: ${DEMO_EMAIL}\nPassword: ${DEMO_PASSWORD}`
-    try {
-      await navigator.clipboard.writeText(text)
+    const copied = await copyText(text)
+
+    if (copied) {
       setCopyMessage('Credentials copied.')
-    } catch {
+      setCopyFailed(false)
+    } else {
       setCopyMessage('Unable to copy credentials. Select the details above and copy them manually.')
+      setCopyFailed(true)
     }
     window.setTimeout(() => setCopyMessage(''), 3000)
   }
@@ -52,7 +57,7 @@ function DemoCredentials() {
         </div>
       </div>
       {copyMessage && (
-        <p role="status" className="mt-3 text-xs text-[#71869a]">
+        <p role={copyFailed ? 'alert' : 'status'} className="mt-3 text-xs text-[#71869a]">
           {copyMessage}
         </p>
       )}
